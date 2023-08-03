@@ -616,6 +616,7 @@ export const removeMember = async (uid, docId) => {
 // users have friends request, check if potential frnd has already sent a request or is the friend of the user already
 
 // docId will be sender userId
+// HelloWorld
 // checks to see if the request is already sent
 export const checkIfRequest = async (uid, docId) => {
   const docRef = doc(db, "users", uid, "requests", docId);
