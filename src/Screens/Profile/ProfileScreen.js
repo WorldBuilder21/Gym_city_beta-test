@@ -20,12 +20,12 @@ import { Snackbar } from "@mui/material";
 import {
   checkIfUserisBlocked,
   checkifFriendOrMember,
-  checkAccountsBlocked
+  checkAccountsBlocked,
 } from "../../Services/firebase";
 import BlockIcon from "@mui/icons-material/Block";
 import MuiAlert from "@mui/material/Alert";
-import {  checkIfRequest } from "../../Services/firebase";
-import PersonAddIcon from '@mui/icons-material/PersonAdd';
+import { checkIfRequest } from "../../Services/firebase";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
 
 const Alert = React.forwardRef(function Alert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
@@ -41,14 +41,14 @@ export default function ProfileScreen() {
   const user_doc = useSelector((state) => state.userdoc.userdoc);
 
   const [blocked, setBlocked] = useState(false);
-  const [blocker, setBlocker] = useState(false)
-  const [blockId, setBlockedId] = useState('')
-  const [blockerId, setBlockerId] = useState('')
+  const [blocker, setBlocker] = useState(false);
+  const [blockId, setBlockedId] = useState("");
+  const [blockerId, setBlockerId] = useState("");
   const [viewStatus, setViewStatus] = useState(false);
 
-  const [request, setRequest] = useState(false)
+  const [request, setRequest] = useState(false);
 
-  const [isInstructor, setIsInstructor] = useState(false)
+  const [isInstructor, setIsInstructor] = useState(false);
 
   const [state, setState] = useState({
     open: false,
@@ -84,12 +84,12 @@ export default function ProfileScreen() {
       // if the account you are viewing has blocked you.
       // id: id of the account being viewed
       // custom_user.uid: the id of the person viewing
-      if(userdoc?.usertype === 'Instructor'){
+      if (userdoc?.usertype === "Instructor") {
         checkIfInstructor(id, custom_user.uid).then((result) => {
-          setIsInstructor(result)
-          setViewStatus(result)
-        })
-      }else {
+          setIsInstructor(result);
+          setViewStatus(result);
+        });
+      } else {
         checkifFriendOrMember(id, custom_user.uid, userdoc?.usertype).then(
           (result) => {
             setViewStatus(result);
@@ -97,26 +97,26 @@ export default function ProfileScreen() {
         );
       }
       checkIfRequest(id, custom_user.uid).then((result) => {
-        setRequest(result)
-      })
+        setRequest(result);
+      });
       checkAccountsBlocked(custom_user.uid, id).then((result) => {
-        setBlocker(result.exists())
-        if(result.exists()){
-          setBlockerId(result.id)
+        setBlocker(result.exists());
+        if (result.exists()) {
+          setBlockerId(result.id);
         }
-      })
+      });
       checkIfUserisBlocked(id, custom_user.uid).then((result) => {
         setBlocked(result.exists());
-        console.log(result.exists())
-        if(result.exists()){
+        console.log(result.exists());
+        if (result.exists()) {
           // the id of the person who blocked this account.
-          setBlockedId(result.id)
+          setBlockedId(result.id);
           // console.log('uid:', custom_user.uid)
           // console.log('blockerId:', result.data().blockerId)
         }
       });
     }
-  }, [custom_user.uid, id]);
+  }, [custom_user.uid, id, userdoc?.usertype]);
 
   console.log("userdoc:", userdoc);
 
@@ -138,8 +138,6 @@ export default function ProfileScreen() {
   const handleChange = (event, newValue) => {
     setValue(newValue);
   };
-
-
 
   // const displayUserBlockedTag = () => {
   //   if(blocked){
@@ -268,43 +266,43 @@ export default function ProfileScreen() {
                   </div>
                 </div>
 
-           
-                  <>
-                    <button
-                      onClick={handleOpen}
-                      type="button"
-                      className="inline-flex items-center p-2 text-sm text-gray-500 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200"
-                    >
-                      <EllipsisVerticalIcon className="w-6 h-6" />
-                    </button>
-                    <AccountModal
-                      Fragment={Fragment}
-                      isOpen={isOpen}
-                      uid={id ? id : custom_user.uid}
-                      usertype={id ? userdoc.usertype : user_doc.usertype}
-                      handleClose={handleClose}
-                      viewStatus={viewStatus}
-                      isblocked={blocked}
-                      isblocker={blockerId === custom_user.uid? true : false}
-                      refetch={refetch}
-                      openSnackbar={openSnackbar}
-                      username={userdoc?.username}
-                      userdata={userdoc}
-                      request={request}
-                      isInstructor={isInstructor}
-                    />
-                  </>
-                
+                <>
+                  <button
+                    onClick={handleOpen}
+                    type="button"
+                    className="inline-flex items-center p-2 text-sm text-gray-500 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                  >
+                    <EllipsisVerticalIcon className="w-6 h-6" />
+                  </button>
+                  <AccountModal
+                    Fragment={Fragment}
+                    isOpen={isOpen}
+                    uid={id ? id : custom_user.uid}
+                    usertype={id ? userdoc.usertype : user_doc.usertype}
+                    handleClose={handleClose}
+                    viewStatus={viewStatus}
+                    isblocked={blocked}
+                    isblocker={blockerId === custom_user.uid ? true : false}
+                    refetch={refetch}
+                    openSnackbar={openSnackbar}
+                    username={userdoc?.username}
+                    userdata={userdoc}
+                    request={request}
+                    isInstructor={isInstructor}
+                  />
+                </>
               </div>
 
-              {blockerId === custom_user.uid ? 
-              <div className="flex flex-row max-w-sm w-full">
-                <div className=' mt-2 rounded-md border px-4 py-1.5 font-semibold text-center text-sm  border-rose-500 flex text-red-500 justify-center items-center'>
-                  <BlockIcon />
-                  <span className="ml-1">blocked</span>
+              {blockerId === custom_user.uid ? (
+                <div className="flex flex-row max-w-sm w-full">
+                  <div className=" mt-2 rounded-md border px-4 py-1.5 font-semibold text-center text-sm  border-rose-500 flex text-red-500 justify-center items-center">
+                    <BlockIcon />
+                    <span className="ml-1">blocked</span>
                   </div>
-              </div>
-              : <></>}
+                </div>
+              ) : (
+                <></>
+              )}
 
               {blocked ? <></> : <p className="mt-2">{userdoc?.bio}</p>}
 
@@ -339,12 +337,17 @@ export default function ProfileScreen() {
                 </div>
               )}
             </div>
-            {userdoc?.usertype === 'Gym' && userdoc?.hiringStatus === 'Hiring' ? <div className="flex ml-2 mt-1">
-              <div className="rounded-md border px-6 py-1.5 font-semibold text-center text-sm flex justify-center items-center bg-green-500 text-white">
-                <PersonAddIcon />
-                <span className="ml-1">Hiring</span>
+            {userdoc?.usertype === "Gym" &&
+            userdoc?.hiringStatus === "Hiring" ? (
+              <div className="flex ml-2 mt-1">
+                <div className="rounded-md border px-6 py-1.5 font-semibold text-center text-sm flex justify-center items-center bg-green-500 text-white">
+                  <PersonAddIcon />
+                  <span className="ml-1">Hiring</span>
+                </div>
               </div>
-            </div> : <></>}
+            ) : (
+              <></>
+            )}
             {userdoc?.usertype === "Instructor" && (
               <div className="flex ml-2 mt-1 space-x-2">
                 <div className="rounded-md border px-4 py-1.5 font-semibold border-black text-center text-sm">

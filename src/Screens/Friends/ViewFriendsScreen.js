@@ -2,7 +2,7 @@ import React from "react";
 import { useNavigate } from "react-router";
 import { viewFriends } from "../../Services/firebase";
 import ErrorMessage from "../Components/ErrorMessage";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useSelector } from "react-redux";
 import ComponentSkeleton from "../Components/ComponentSkeleton";
 import FriendCard from "./Components/FriendCard";
@@ -12,13 +12,30 @@ export default function ViewFriendsScreen() {
   const navigate = useNavigate();
   const userId = useSelector((state) => state.userId.userId);
   const custom_user = useSelector((state) => state.user.user);
-  const { data, status, refetch } = useQuery(
+
+  const {
+    status,
+    error,
+    data,
+    refetch,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery(
     {
       queryKey: ["Friends"],
       queryFn: () => viewFriends(userId === " " ? custom_user.uid : userId),
+      getNextPageParam: (lastpage) => lastpage.nextPage,
     },
     { enabled: false }
   );
+  // const { data, status, refetch } = useQuery(
+  //   {
+  //     queryKey: ["Friends"],
+  //     queryFn: () => viewFriends(userId === " " ? custom_user.uid : userId),
+  //   },
+  //   { enabled: false }
+  // );
   return (
     <>
       <nav className="bg-white px-4 py-4 relative w-full z-20 top-0 left-0 border-b border-gray-200 mb-2 drop-shadow-md">
@@ -65,20 +82,44 @@ export default function ViewFriendsScreen() {
         />
       ) : (
         <div>
-          {data.empty ? (
-            <div className="flex flex-col justify-center items-center h-screen text-gray-500">
-              <GroupIcon sx={{ fontSize: 150 }} />
-              <span className="mt-3 text-lg text-center font-semibold">
-                There are no users to display.
-              </span>
-            </div>
-          ) : (
-            <div className="flex flex-col justify-center items-center mt-10">
-              {data.docs.map((data, index) => (
-                <FriendCard key={index} />
-              ))}
-            </div>
-          )}
+          <div className="flex flex-col justify-center items-center mt-10">
+            {data.pages.map(
+              (page, index) =>
+                page.friends.empty ? (
+                  <div className="flex flex-col justify-center items-center h-screen text-gray-500">
+                    <GroupIcon sx={{ fontSize: 150 }} />
+                    <span className="mt-3 text-lg text-center font-semibold">
+                      There are no users to display.
+                    </span>
+                  </div>
+                ) : (
+                  <div key={index} className="max-w-lg w-full">
+                    {page.friends.docs.map((friend, index) => (
+                      <FriendCard docId={friend.id} key={index} />
+                    ))}
+                  </div>
+                )
+              // <FriendCard key={index} />
+            )}
+            {hasNextPage && (
+              <button
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+              >
+                {isFetchingNextPage ? (
+                  <div className="flex mx-2 flex-col justify-center items-center mt-10">
+                    <ComponentSkeleton />
+                    <ComponentSkeleton />
+                    <ComponentSkeleton />
+                  </div>
+                ) : (
+                  <div className="text-center text-blue-500 font-semibold">
+                    Load more
+                  </div>
+                )}
+              </button>
+            )}
+          </div>
         </div>
       )}
     </>

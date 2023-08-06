@@ -20,11 +20,22 @@ export default function RequestScreen() {
   //   queryFn: () => getRequests(custom_user.uid),
   // }, { enabled: false });
 
-  const { status, error, data, refetch, hasNextPage, fetchNextPage } = useInfiniteQuery({
-    queryKey: ['requests'],
-    queryFn: () => getRequests(custom_user.uid),
-    getNextPageParam: (lastpage) => lastpage.nextPage
-  })
+  const {
+    status,
+    error,
+    data,
+    refetch,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery(
+    {
+      queryKey: ["requests"],
+      queryFn: () => getRequests(custom_user.uid),
+      getNextPageParam: (lastpage) => lastpage.nextPage,
+    },
+    { enabled: false }
+  );
 
   const [state, setState] = useState({
     open: false,
@@ -76,30 +87,51 @@ export default function RequestScreen() {
         </div>
       ) : (
         <div>
-          {data.empty ? (
-            <div className="flex flex-col justify-center items-center h-screen text-gray-500">
-              <NotificationsOffIcon sx={{ fontSize: 150 }} />
-              <span className="mt-3 text-lg text-center font-semibold">
-                No one has sent you any requests.
-              </span>
-            </div>
-          ) : (
-            <div className="flex mx-2 flex-col items-center justify-center mt-10">
-              {data.pages.map((page, index) => (
+          <div className="flex mx-2 flex-col items-center justify-center mt-10">
+            {data.pages.map((page, index) =>
+              page.requests.empty ? (
+                <div className="flex flex-col justify-center items-center h-screen text-gray-500">
+                  <NotificationsOffIcon sx={{ fontSize: 150 }} />
+                  <span className="mt-3 text-lg text-center font-semibold">
+                    No one has sent you any requests.
+                  </span>
+                </div>
+              ) : (
                 <div key={index} className="max-w-lg w-full">
-                  {page.requests.docs.map((request) => (
-                    <RequestCard openSnackbar={openSnackbar} refetch={refetch} item={request.data()} uid={request.data().senderId} key={index} />
+                  {page.requests.docs.map((request, index) => (
+                    <RequestCard
+                      openSnackbar={openSnackbar}
+                      refetch={refetch}
+                      item={request.data()}
+                      uid={request.data().senderId}
+                      key={index}
+                    />
                   ))}
                 </div>
-              ))}
-              {/* {data.pages.map((data, index) => (
+              )
+            )}
+            {/* {data.pages.map((data, index) => (
          
               ))} */}
-              {hasNextPage && (
-                <button ></button>
-              )}
-            </div>
-          )}
+            {hasNextPage && (
+              <button
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+              >
+                {isFetchingNextPage ? (
+                  <div>
+                    <ComponentSkeleton />
+                    <ComponentSkeleton />
+                    <ComponentSkeleton />
+                  </div>
+                ) : (
+                  <div className="text-center text-blue-500 font-semibold">
+                    Load more
+                  </div>
+                )}
+              </button>
+            )}
+          </div>
         </div>
       )}
     </div>
