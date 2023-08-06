@@ -21,6 +21,11 @@ export default function PrivacyDialogBox({
     { name: userdoc.usertype === "Gym" ? "Members only" : "Friends only" },
     userdoc.usertype !== "Gym" && { name: "Private" },
   ];
+
+  const hiringTypes = [
+    { name: 'Hiring' },
+    { name: 'Not hiring' }
+  ]
   const [selectedType, setSelectedType] = useState({ name: oldStatus });
   // privacyTypes[privacyTypes.indexOf({ name: oldStatus })].name
 
@@ -76,23 +81,31 @@ export default function PrivacyDialogBox({
             >
               <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-lg bg-white p-6 text-left align-middle shadow-xl transition-all">
                 <Dialog.Title as="h3" className="font-semibold text-lg mb-2">
-                  Change privacy mode · {type}
+                  {type === 'Employment' ? 'Change employment status' : `Change privacy mode · ${type}`}
                 </Dialog.Title>
                 <div className="flex flex-col justify-center items-center">
                   <div className="w-full">
                     <Selector
                       selectedType={selectedType}
                       setSelectedType={setSelectedType}
-                      list={privacyTypes}
+                      list={type === 'Employment' ? hiringTypes : privacyTypes}
                       Fragment={Fragment}
                     />
                   </div>
                   <span className="mt-4 p-4 text-white border rounded-md w-full bg-rose-500">
-                    {selectedType.name === "Public"
-                      ? `Everybody can view your ${type.toLowerCase()} regardless of if they are in ur friends list or not.`
-                      : selectedType.name === "Friends only"
-                      ? `Only users in your friends list can view your ${type.toLowerCase()}.`
-                      : `You are the only one that can view your ${type.toLowerCase()}.`}
+                    {
+                      type === 'Employment' ? 
+                      <>
+                        {selectedType.name === 'Hiring'? 'Your gym will be listed with a hiring tag in the instructor search results, allowing them to send employment requests directly to you.': 'Instructors will be unable to send employment request to you.'}                      
+                      </> : 
+                      <>
+                        {selectedType.name === "Public"
+                          ? `Everybody can view your ${type.toLowerCase()} regardless of if they are in ur friends list or not.`
+                          : selectedType.name === "Friends only"
+                            ? `Only users in your friends list can view your ${type.toLowerCase()}.`
+                            : `You are the only one that can view your ${type.toLowerCase()}.`}
+                      </>
+                    }
                     {/* Everybody can see your post regardless of if they are in ur
                     friends list or not. */}
                   </span>

@@ -12,7 +12,7 @@ export default function CommentsTile({ docId, item, uid }) {
     queryKey: ["commentData"],
     queryFn: () => getUserDataUid(uid),
     enabled: docId != null,
-  });
+  }, {enabled: false});
   const custom_user = useSelector((state) => state.user.user);
   const queryClient = useQueryClient();
 

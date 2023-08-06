@@ -38,7 +38,7 @@ export default function CommentDialogBox({
   } = useInfiniteQuery({
     queryKey: ["comments", "infinite"],
     queryFn: () => handlePaginateComments(docId, uid),
-    getNextPageParam: (lastPage) => lastPage.nextPageParam,
+    getNextPageParam: (lastPage) =>lastPage.nextPage,
   });
 
   console.log(data);

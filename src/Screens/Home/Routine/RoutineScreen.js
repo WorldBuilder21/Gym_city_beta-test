@@ -6,10 +6,12 @@ import { useSelector } from "react-redux";
 import RoutineSkeletons from "../Components/RoutineSkeletons";
 import ErrorMessage from "../../Components/ErrorMessage";
 import RoutinePlaceHolder from "./components/RoutinePlaceHolder";
-import { checkifFriendOrMember } from "../../../Services/firebase";
+import { sendUserRequest } from "../../../Services/firebase";
+import SubscriptionCard from "../Components/SubscriptionCard";
 
-export default function RoutineScreen({ uid, data, viewStatus }) {
+export default function RoutineScreen({ uid, data, viewStatus, openSnackbar }) {
   const custom_user = useSelector((state) => state.user.user);
+  const userdoc = useSelector((state) => state.userdoc.userdoc)
   // const [viewStatus, setViewStatus] = useState(false);
   const navigate = useNavigate();
   const { status, data: routines } = useQuery(
@@ -19,6 +21,11 @@ export default function RoutineScreen({ uid, data, viewStatus }) {
     },
     { enabled: false }
   );
+
+  const handleRequest = () => {
+    sendUserRequest(uid, custom_user.uid, data?.usertype === 'Gym' ? 'Membership' : data?.usertype === 'Instructor' ? 'Employment' : 'Friend')
+    openSnackbar({ message: 'Request sent successfully.' })
+  }
 
   // useEffect(() => {
   //   if (
@@ -34,50 +41,7 @@ export default function RoutineScreen({ uid, data, viewStatus }) {
   // }, [custom_user.uid, uid, data?.routinePrivacyStatus, data?.usertype]);
 
   const displayFunction = () => {
-    if (data?.routinePrivacyStatus === "Private") {
-      if (custom_user.uid === uid) {
-        return (
-          <RoutinePlaceHolder
-            routines={routines}
-            navigate={navigate}
-            custom_user={custom_user}
-            uid={uid}
-          />
-        );
-      } else {
-        return (
-          <div className="flex flex-col justify-center items-center mt-40">
-            <span className="text-center font-semibold text-gray-400 mt-2 text-xl">
-              This users posts are private.
-            </span>
-          </div>
-        );
-      }
-    } else if (
-      data?.routinePrivacyStatus === "Friends only" ||
-      data?.routinePrivacyStatus === "Members only"
-    ) {
-      if (viewStatus === true) {
-        return (
-          <RoutinePlaceHolder
-            routines={routines}
-            navigate={navigate}
-            custom_user={custom_user}
-            uid={uid}
-          />
-        );
-      } else {
-        return (
-          <div className="flex flex-col mt-40 justify-center items-center">
-            <span className="text-center font-semibold text-gray-400 mt-2 text-xl">
-              {data?.usertype === "Gym"
-                ? "Only members can view this post."
-                : "Only the users friends can view this post."}
-            </span>
-          </div>
-        );
-      }
-    } else if (data?.routinePrivacyStatus === "Public") {
+    if (custom_user.uid === uid) {
       return (
         <RoutinePlaceHolder
           routines={routines}
@@ -87,12 +51,61 @@ export default function RoutineScreen({ uid, data, viewStatus }) {
         />
       );
     } else {
-      return <></>;
-      // <div className="flex flex-col mt-40 justify-center items-center">
-      //   <span className="text-center font-semibold text-gray-500 mt-2 text-xl">
-      //     Invalid privacy status
-      //   </span>
-      // </div>;
+      if (data?.routinePrivacyStatus === "Private") {
+        if (custom_user.uid === uid) {
+          return (
+            <RoutinePlaceHolder
+              routines={routines}
+              navigate={navigate}
+              custom_user={custom_user}
+              uid={uid}
+            />
+          );
+        } else {
+          return (
+            <div className="flex flex-col justify-center items-center mt-40">
+              <span className="text-center font-semibold text-gray-400 mt-2 text-xl">
+                This users routines are private.
+              </span>
+            </div>
+          );
+        }
+      } else if (
+        data?.routinePrivacyStatus === "Friends only" ||
+        data?.routinePrivacyStatus === "Members only"
+      ) {
+        if (viewStatus === true) {
+          return (
+            <RoutinePlaceHolder
+              routines={routines}
+              navigate={navigate}
+              custom_user={custom_user}
+              uid={uid}
+            />
+          );
+        } else {
+          return
+          <div className="mt-40">
+            <SubscriptionCard handleRequest={handleRequest} data={data} userdoc={userdoc} />
+          </div>
+        }
+      } else if (data?.routinePrivacyStatus === "Public") {
+        return (
+          <RoutinePlaceHolder
+            routines={routines}
+            navigate={navigate}
+            custom_user={custom_user}
+            uid={uid}
+          />
+        );
+      } else {
+        return <></>;
+        // <div className="flex flex-col mt-40 justify-center items-center">
+        //   <span className="text-center font-semibold text-gray-500 mt-2 text-xl">
+        //     Invalid privacy status
+        //   </span>
+        // </div>;
+      }
     }
   };
   return (

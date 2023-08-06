@@ -12,15 +12,24 @@ import PostScreen from "../Home/Post/PostScreen";
 // import RoutineScreen from "../Home/Routine/RoutineScreen";
 import RoutineScreen from "../Home/Routine/RoutineScreen";
 import { useNavigate, useParams } from "react-router";
-import { getUserDataUid } from "../../Services/firebase";
+import { checkIfInstructor, getUserDataUid } from "../../Services/firebase";
 import { useQuery } from "@tanstack/react-query";
 import ErrorMessage from "../Components/ErrorMessage";
 import GroupIcon from "@mui/icons-material/Group";
+import { Snackbar } from "@mui/material";
 import {
   checkIfUserisBlocked,
   checkifFriendOrMember,
+  checkAccountsBlocked
 } from "../../Services/firebase";
 import BlockIcon from "@mui/icons-material/Block";
+import MuiAlert from "@mui/material/Alert";
+import {  checkIfRequest } from "../../Services/firebase";
+import PersonAddIcon from '@mui/icons-material/PersonAdd';
+
+const Alert = React.forwardRef(function Alert(props, ref) {
+  return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
+});
 
 export default function ProfileScreen() {
   let { id } = useParams();
@@ -32,7 +41,31 @@ export default function ProfileScreen() {
   const user_doc = useSelector((state) => state.userdoc.userdoc);
 
   const [blocked, setBlocked] = useState(false);
+  const [blocker, setBlocker] = useState(false)
+  const [blockId, setBlockedId] = useState('')
+  const [blockerId, setBlockerId] = useState('')
   const [viewStatus, setViewStatus] = useState(false);
+
+  const [request, setRequest] = useState(false)
+
+  const [isInstructor, setIsInstructor] = useState(false)
+
+  const [state, setState] = useState({
+    open: false,
+    vertical: "top",
+    horizontal: "right",
+    message: "",
+    severity: "",
+  });
+  const { vertical, horizontal, open, message, severity } = state;
+
+  const openSnackbar = (newState) => {
+    setState({ open: true, ...newState });
+  };
+
+  const closeSnackbar = () => {
+    setState({ ...state, open: false });
+  };
 
   const {
     status,
@@ -48,18 +81,39 @@ export default function ProfileScreen() {
 
   useEffect(() => {
     if (id !== undefined) {
-      checkifFriendOrMember(id, custom_user.uid, userdoc?.usertype).then(
-        (result) => {
-          setViewStatus(result);
+      // if the account you are viewing has blocked you.
+      // id: id of the account being viewed
+      // custom_user.uid: the id of the person viewing
+      if(userdoc?.usertype === 'Instructor'){
+        checkIfInstructor(id, custom_user.uid).then((result) => {
+          setIsInstructor(result)
+          setViewStatus(result)
+        })
+      }else {
+        checkifFriendOrMember(id, custom_user.uid, userdoc?.usertype).then(
+          (result) => {
+            setViewStatus(result);
+          }
+        );
+      }
+      checkIfRequest(id, custom_user.uid).then((result) => {
+        setRequest(result)
+      })
+      checkAccountsBlocked(custom_user.uid, id).then((result) => {
+        setBlocker(result.exists())
+        if(result.exists()){
+          setBlockerId(result.id)
         }
-      );
-    }
-  }, [custom_user.uid, id, userdoc?.usertype]);
-
-  useEffect(() => {
-    if (id !== undefined) {
+      })
       checkIfUserisBlocked(id, custom_user.uid).then((result) => {
-        setBlocked(result);
+        setBlocked(result.exists());
+        console.log(result.exists())
+        if(result.exists()){
+          // the id of the person who blocked this account.
+          setBlockedId(result.id)
+          // console.log('uid:', custom_user.uid)
+          // console.log('blockerId:', result.data().blockerId)
+        }
       });
     }
   }, [custom_user.uid, id]);
@@ -85,6 +139,14 @@ export default function ProfileScreen() {
     setValue(newValue);
   };
 
+
+
+  // const displayUserBlockedTag = () => {
+  //   if(blocked){
+  //     if(id ==== cus)
+  //   }
+  // }
+
   function TabPanel(props) {
     const { children, value, index, ...other } = props;
 
@@ -107,6 +169,24 @@ export default function ProfileScreen() {
 
   return (
     <div>
+      <Snackbar
+        open={open}
+        autoHideDuration={10000}
+        onClose={closeSnackbar}
+        anchorOrigin={{
+          vertical: "top",
+          horizontal: "right",
+        }}
+        key={vertical + horizontal}
+      >
+        <Alert
+          onClose={closeSnackbar}
+          sx={{ width: "100%" }}
+          severity={severity}
+        >
+          {message}
+        </Alert>
+      </Snackbar>
       {id ? (
         <nav className="bg-white px-4 py-4 relative w-full z-20 top-0 left-0 border-b border-gray-200 mb-2 drop-shadow-md">
           <div className="container flex flex-wrap  items-center">
@@ -188,9 +268,7 @@ export default function ProfileScreen() {
                   </div>
                 </div>
 
-                {blocked ? (
-                  <></>
-                ) : (
+           
                   <>
                     <button
                       onClick={handleOpen}
@@ -207,11 +285,26 @@ export default function ProfileScreen() {
                       handleClose={handleClose}
                       viewStatus={viewStatus}
                       isblocked={blocked}
+                      isblocker={blockerId === custom_user.uid? true : false}
                       refetch={refetch}
+                      openSnackbar={openSnackbar}
+                      username={userdoc?.username}
+                      userdata={userdoc}
+                      request={request}
+                      isInstructor={isInstructor}
                     />
                   </>
-                )}
+                
               </div>
+
+              {blockerId === custom_user.uid ? 
+              <div className="flex flex-row max-w-sm w-full">
+                <div className=' mt-2 rounded-md border px-4 py-1.5 font-semibold text-center text-sm  border-rose-500 flex text-red-500 justify-center items-center'>
+                  <BlockIcon />
+                  <span className="ml-1">blocked</span>
+                  </div>
+              </div>
+              : <></>}
 
               {blocked ? <></> : <p className="mt-2">{userdoc?.bio}</p>}
 
@@ -246,7 +339,12 @@ export default function ProfileScreen() {
                 </div>
               )}
             </div>
-
+            {userdoc?.usertype === 'Gym' && userdoc?.hiringStatus === 'Hiring' ? <div className="flex ml-2 mt-1">
+              <div className="rounded-md border px-6 py-1.5 font-semibold text-center text-sm flex justify-center items-center bg-green-500 text-white">
+                <PersonAddIcon />
+                <span className="ml-1">Hiring</span>
+              </div>
+            </div> : <></>}
             {userdoc?.usertype === "Instructor" && (
               <div className="flex ml-2 mt-1 space-x-2">
                 <div className="rounded-md border px-4 py-1.5 font-semibold border-black text-center text-sm">
@@ -297,6 +395,7 @@ export default function ProfileScreen() {
                 viewStatus={viewStatus}
                 data={userdoc}
                 uid={id ? id : custom_user.uid}
+                openSnackbar={openSnackbar}
               />
             </TabPanel>
           </div>
