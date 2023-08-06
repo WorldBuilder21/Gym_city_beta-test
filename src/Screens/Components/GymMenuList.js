@@ -81,12 +81,12 @@ export default function GymMenuList({ handleDrawerClose, location }) {
             : "text-gray-900 bg-white"
         } py-2.5 w-full flex items-center font-semibold text-lg mt-5 px-5 mb-2 font-meduim rounded-lg focus:border focus:border-gray-200 hover:bg-gray-100 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-200`}
         onClick={() => {
-          navigate("/notifications");
+          navigate("/requests");
           handleDrawerClose();
         }}
       >
         <NotificationsActiveIcon sx={{ fontSize: 30 }} />
-        <span className="ml-2 text-lg">Notifications</span>
+        <span className="ml-2 text-lg">Requests</span>
       </button>
       <button
         type="button"

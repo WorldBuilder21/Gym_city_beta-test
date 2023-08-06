@@ -165,7 +165,7 @@ function Search() {
         <></>
       )}
       {/* This section is only for testing purposes */}
-      {userdoc.usertype === "User" ? (
+      {userdoc.usertype === "User" || userdoc.usertype === 'Instructor' ? (
         <div className="mt-4">
           <h1 className="font-semibold text-2xl mb-2">Test Users</h1>
           {user_status === "loading" ? (

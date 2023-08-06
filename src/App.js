@@ -23,7 +23,8 @@ import AddWorkoutRoutine from "./Screens/Home/Routine/AddWorkoutRoutine";
 import ViewWorkoutRoutine from "./Screens/Home/ViewWorkoutRoutine";
 import { AuthContextProvider } from "./Context/AuthContext";
 import WeightTrackerScreen from "./Screens/Settings/WeightTrackerScreen";
-import NotificationsScreen from "./Screens/Notifications/NotificationsScreen";
+// import NotificationsScreen from "./Screens/Notifications/NotificationsScreen";
+import RequestScreen from "./Screens/Requests/RequestsScreen";
 import ViewFriendsScreen from "./Screens/Friends/ViewFriendsScreen";
 import MemberScreen from "./Screens/Member/MemberScreen";
 import ViewInstructorScreen from "./Screens/Instructors/ViewInstructorScreen";
@@ -47,7 +48,7 @@ function App() {
               <Route path="settings" element={<SettingsScreen />} />
               <Route path="search" element={<SearchScreen />} />
               <Route path="profile" element={<ProfileScreen />} />
-              <Route path="notifications" element={<NotificationsScreen />} />
+              <Route path="requests" element={<RequestScreen />} />
               <Route element={<GymProtectedRouter />}>
                 <Route path="dashboard" element={<DashboardScreen />} />
               </Route>

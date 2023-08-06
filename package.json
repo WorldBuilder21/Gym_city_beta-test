@@ -21,7 +21,7 @@
     "dayjs": "^1.11.8",
     "embla-carousel-autoplay": "^8.0.0-rc11",
     "embla-carousel-react": "^8.0.0-rc11",
-    "firebase": "^9.22.1",
+    "firebase": "^9.23.0",
     "luxon": "^3.3.0",
     "moment": "^2.29.4",
     "react": "^18.2.0",

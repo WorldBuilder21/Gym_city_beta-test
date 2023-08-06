@@ -163,6 +163,7 @@ export const creatGymDoc = async ({
     // Public, Members only,
     postPrivacyStatus: "Members only",
     routinePrivacyStatus: "Members only",
+    hiringStatus: 'hiring',
   });
   await setDoc(memberRef, {
     docId: uid,
@@ -197,6 +198,7 @@ export const createGym = async ({
         // Public, Members only,
         postPrivacyStatus: "Members only",
         routinePrivacyStatus: "Members only",
+        hiringStatus: 'hiring',
       });
       await setDoc(memberRef, {
         docId: user.uid,
@@ -533,11 +535,35 @@ export const top_instructors = async () => {
   return querySnapshot;
 };
 
-export const getNotifications = async (uid) => {
-  const collection_ref = collection(db, "users", uid, "Notifications");
-  const docsSnap = await getDocs(collection_ref);
-  return docsSnap;
-};
+export const getRequests = async (uid) => {
+  const collection_ref = collection(db, 'users', uid, 'requests')
+  const q = query(collection_ref, limit(15))
+  let requests = await getDocs(q)
+
+  const lastVisible = requests.docs[requests.docs.length - 1]
+
+  if(lastVisible === 15){
+    const next = query(
+      collection_ref, 
+      startAfter(lastVisible),
+      limit(15)
+    );
+    requests = await getDocs(next)
+  }
+
+  return {
+    requests, nextPage: lastVisible,
+  }
+
+  // const docsSnap = await getDocs(collection_ref)
+  // return docsSnap;
+}
+
+// export const getNotifications = async (uid) => {
+//   const collection_ref = collection(db, "users", uid, "Notifications");
+//   const docsSnap = await getDocs(collection_ref);
+//   return docsSnap;
+// };
 
 export const getTestUsers = async () => {
   const collection_ref = collection(db, "users");
@@ -625,16 +651,52 @@ export const checkIfRequest = async (uid, docId) => {
 
 // sending friend and member request
 // sending of membership request(user) and employment request (instructors) is the same format,
-export const sendUserRequest = async ({ uid, docId, type }) => {
+export const sendUserRequest = async ( uid, docId, typeOfRequest, sendertype ) => {
   // types of request: membership request, creation of routine, friend request
-  const docRef = doc(db, "users", uid, "requests", docId);
-  return await setDoc(docRef, {
-    ts: serverTimestamp(),
-    senderId: docId,
-    // friend, membership
-    type: type,
-  });
+    const docRef = doc(db, "users", uid, "requests", docId);
+    return await setDoc(docRef, {
+      ts: serverTimestamp(),
+      senderId: docId,
+      // friend, membership
+      requestType: typeOfRequest,
+      sendertype,
+    });
 };
+
+export const declineRequest = async (uid, docId) => {
+  const docRef = doc(db, 'users', uid, 'requests', docId)
+  await deleteDoc(docRef)
+}
+
+export const acceptRequest = async (uid, docId, requestType) => {
+  // for friends requests u have to add the document to in the friends collection of both the users
+  if(requestType === 'friend'){
+    const docRef = doc(db, 'users', uid, 'friends', docId)
+    const doc_ref = doc(db, 'users', docId, 'friends', uid)
+    await setDoc(docRef, {
+      ts: serverTimestamp(),
+      friendId: docId,
+    })
+    await setDoc(doc_ref, {
+      ts: serverTimestamp(),
+      friendId: uid,
+    })
+  }
+  if(requestType === 'Membership'){
+    const docRef = doc(db, 'users', uid, 'members', docId)
+    await setDoc(docRef, {
+      ts: serverTimestamp(),
+      memberId: docId
+    })
+  }
+  if(requestType === 'Employment'){
+    const docRef = doc(db, 'users', uid, 'instructors', docId)
+    await setDoc(docRef, {
+      ts: serverTimestamp(),
+      instructorId: docId
+    })
+  }
+}
 
 export const sendRoutineRequest = async ({ uid, docId, type, data }) => {
   const docRef = doc(db, "users", uid, "requests", docId);
@@ -669,6 +731,13 @@ export const updatePrivacyStatus = async ({
       });
     }
   }
+  if(type === 'Employment'){
+    if(oldStatus !== newStatus){
+      await updateDoc(docRef, {
+        hiringStatus: newStatus,
+      })
+    }
+  }
 };
 
 // create message for reject of routine in inbox
@@ -677,11 +746,36 @@ export const updatePrivacyStatus = async ({
 // Blocked user are unable to view the post and routine of user
 // Blocked users are unable to send comments to a user
 
+// check if have blocked user, blocked
 export const checkIfUserisBlocked = async (uid, docId) => {
+  // uid: is the account being viewed id
+  // docId: is the viewers id
+  
+  // if the account being viewed has blocked me
+  // if i have blocked others from viewing me
+
+  // have i blocked the user??
+  // has the user blocked me??
+
+  // STATES OF BEING BLOCKED
+  // the user blocks me, i didnt blocked the user
+  // i block the user, the user doesnt block me
+  // we both block each other
+
+  // is the person vieing my page on my block list??
   const docRef = doc(db, "users", uid, "blocked", docId);
+
   const docSnap = await getDoc(docRef);
-  return docSnap.exists();
+  return docSnap;
 };
+
+// check the account i have blocked, blocker
+export const checkAccountsBlocked = async (uid, docId) => {
+  const docRef = doc(db, 'users',docId, 'block2', uid)
+  const docSnap = await getDoc(docRef)
+  return docSnap;
+}
+
 
 export const viewBlockedUsers = async (uid) => {
   const blockRef = collection(db, "users", uid, "blocked");
@@ -690,18 +784,36 @@ export const viewBlockedUsers = async (uid) => {
 };
 
 // user would be blocked from sending request to user, messaging, joining gym and will not be able to view users profile
-export const blockUser = async ({ uid, docId }) => {
+export const blockUser = async (uid, docId) => {
+  // uid: users account uid
+  // docId: the user being blocked uid
+  // format: blockedId_blockerId
+  // const docRef = doc(db, 'users', uid, 'blocked', docId)
+
+  // the persons account i am viewing i want to blocked it
+  // account that i have blocked
   const docRef = doc(db, "users", uid, "blocked", docId);
-  return await setDoc(docRef, {
+
+  // account the have blocked me
+  const doc_ref = doc(db, 'users', docId, 'block2', uid)
+  
+  await setDoc(docRef, {
     // to show time when user was blocked
     ts: serverTimestamp(),
     blockedId: docId,
   });
+
+  await setDoc(doc_ref, {
+    ts:serverTimestamp(),
+    blockerId: uid
+  })
 };
 
-export const unblockUser = async ({ uid, docId }) => {
+export const unblockUser = async (uid, docId ) => {
   const docRef = doc(db, "users", uid, "blocked", docId);
-  return await deleteDoc(docRef);
+  const doc_ref = doc(db, 'users',docId, 'block2', uid)
+  await deleteDoc(docRef);
+  await deleteDoc(doc_ref)
 };
 
 // function is to block users from post on a particular post

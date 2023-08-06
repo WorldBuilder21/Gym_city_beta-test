@@ -66,7 +66,7 @@ function Signup() {
     <>
       <Snackbar
         open={open}
-        autoHideDuration={1000}
+        autoHideDuration={10000}
         onClose={closeSnackbar}
         anchorOrigin={{
           vertical: "top",
