@@ -4,9 +4,16 @@ import { Divider } from "@mui/material";
 import { useDispatch, useSelector } from "react-redux";
 import { useLocation, useNavigate } from "react-router";
 import { getUserId } from "../../../utils/store/user/getUserIdSlice";
-import { blockUser, sendUserRequest, unblockUser } from "../../../Services/firebase";
+import {
+  blockUser,
+  sendUserRequest,
+  unblockUser,
+} from "../../../Services/firebase";
 import CustomDialogBox from "../../Settings/Components/CustomDialogBox";
 import SubscriptionDialogBox from "./SubscriptionDialogBox";
+import { checkIfRequest } from "../../../Services/firebase";
+import { checkifFriendOrMember } from "../../../Services/firebase";
+import { checkIfUserisBlocked } from "../../../Services/firebase";
 
 export default function AccountModal({
   Fragment,
@@ -29,130 +36,195 @@ export default function AccountModal({
   const navigate = useNavigate();
   const dispatch = useDispatch();
   // openModal, blocking modal
-  const [openModal, setOpenModal] = useState(false)
-  const [unblockModal, setUnblockModal] = useState(false)
-  const [subscriptionModal, setSubscriptionModal] = useState(false)
+  const [openModal, setOpenModal] = useState(false);
+  const [unblockModal, setUnblockModal] = useState(false);
+  const [subscriptionModal, setSubscriptionModal] = useState(false);
 
   const location = useLocation();
   const pathname = location.pathname;
 
   // for the blocking modal
   const handleCloseModal = () => {
-    setOpenModal(false)
-  }
+    setOpenModal(false);
+  };
 
   const handleOpenSubscriptionModal = () => {
-    handleClose()
-    setSubscriptionModal(true)
-  }
+    handleClose();
+    setSubscriptionModal(true);
+  };
 
   const handleCloseSubscriptionModal = () => {
-    setSubscriptionModal(false)
-  }
+    setSubscriptionModal(false);
+  };
 
   // for the blocking modal
   const handleOpen = () => {
-    setOpenModal(true)
-  }
+    setOpenModal(true);
+  };
 
   const handleOpenUnblockModal = () => {
-    setUnblockModal(true)
-  }
+    setUnblockModal(true);
+  };
 
   const handleCloseUnblockModal = () => {
-    setUnblockModal(false)
-  }
+    setUnblockModal(false);
+  };
 
   const taskHandler = () => {
-    blockUser(custom_user.uid, uid)
-    refetch()
-    openSnackbar({ message: `You have blocked ${userdata?.usertype === 'Gym'?userdata?.gymname: userdata?.fullname}.`, severity: 'error' })
-    handleClose()
-  }
+    blockUser(custom_user.uid, uid);
+    refetch();
+    openSnackbar({
+      message: `You have blocked ${
+        userdata?.usertype === "Gym" ? userdata?.gymname : userdata?.fullname
+      }.`,
+      severity: "error",
+    });
+    handleClose();
+  };
 
   // send membership and employment request
-  const handleRequest = () => {
-    if (userdoc.usertype === 'Instructor') {
-      if (isInstructor === true) {
-        openSnackbar({ message: 'You are already an Instructor in this gym.' })
-      } else {
-        try {
-          sendUserRequest(uid, custom_user.uid, 'Employment', userdoc?.usertype)
-          openSnackbar({ message: 'Your employment request has been sent.' })
-        } catch (error) {
-          openSnackbar({ message: 'An error occurred while sending your requests.', severity: 'error' })
+  const handleRequest = async () => {
+    const request_check = await checkIfRequest(uid, custom_user.uid);
+    if (request_check === false) {
+      if (userdoc.usertype === "Instructor") {
+        if (isInstructor === true) {
+          openSnackbar({
+            message: "You are already an Instructor in this gym.",
+          });
+        } else {
+          try {
+            sendUserRequest(
+              uid,
+              custom_user.uid,
+              "Employment",
+              userdoc?.usertype
+            );
+            openSnackbar({ message: "Your employment request has been sent." });
+          } catch (error) {
+            openSnackbar({
+              message: "An error occurred while sending your requests.",
+              severity: "error",
+            });
+          }
         }
-
+      } else {
+        if (viewStatus === true) {
+          openSnackbar({ message: "You are already a member in the gym." });
+        } else {
+          try {
+            sendUserRequest(
+              uid,
+              custom_user.uid,
+              "Membership",
+              userdoc?.usertype
+            );
+            openSnackbar({ message: "You membership request has been sent." });
+          } catch (error) {
+            openSnackbar({
+              message: "An error occurred while sending your requests.",
+              severity: "error",
+            });
+          }
+        }
       }
     } else {
-      if (viewStatus === true) {
-        openSnackbar({ message: 'You are already a member in the gym.' })
-      } else {
-        try {
-          sendUserRequest(uid, custom_user.uid, 'Membership', userdoc?.usertype)
-          openSnackbar({ message: 'You membership request has been sent.' })
-        } catch (error) {
-          openSnackbar({ message: 'An error occurred while sending your requests.', severity: 'error' })
-        }
-
-      }
+      openSnackbar({
+        message: "You have already sent a request.",
+        severity: "error",
+      });
     }
-    handleClose()
-  }
+
+    handleClose();
+  };
 
   // Sending friend request
   const handleFriendRequest = async () => {
     if (viewStatus === true) {
-      openSnackbar({ message: "You are already in this user's friends list.", severity: 'error' })
+      openSnackbar({
+        message: "You are already in this user's friends list.",
+        severity: "error",
+      });
     } else if (request === true) {
-      openSnackbar({ message: 'You have already sent this user a friend request.', severity: 'error' })
+      openSnackbar({
+        message: "You have already sent this user a friend request.",
+        severity: "error",
+      });
     } else {
-      sendUserRequest(uid, custom_user.uid, 'friend', userdoc?.usertype)
-      handleClose()
-      openSnackbar({ message: 'Your friend request has been sent.' })
+      sendUserRequest(uid, custom_user.uid, "friend", userdoc?.usertype);
+      handleClose();
+      openSnackbar({ message: "Your friend request has been sent." });
     }
-    handleClose()
-  }
+    handleClose();
+  };
 
   const handleUnblock = () => {
-    unblockUser(custom_user.uid, uid)
-    refetch()
-    openSnackbar({ message: `You have unblocked ${userdata?.usertype === 'Gym'?userdata?.gymname: userdata?.fullname}.` })
-    handleCloseModal()
-    handleClose()
-  }
+    unblockUser(custom_user.uid, uid);
+    refetch();
+    openSnackbar({
+      message: `You have unblocked ${
+        userdata?.usertype === "Gym" ? userdata?.gymname : userdata?.fullname
+      }.`,
+    });
+    handleCloseModal();
+    handleClose();
+  };
 
   const displayMessage = () => {
-    if (userdata?.usertype === 'Gym') {
-      if (userdoc?.usertype === 'Instructor') {
-        return 'Send employment request'
+    if (userdata?.usertype === "Gym") {
+      if (userdoc?.usertype === "Instructor") {
+        return "Send employment request";
       } else {
-        return 'Become A member'
+        return "Become A member";
       }
     } else {
-      return 'Send friend request'
+      return "Send friend request";
     }
-  }
+  };
 
   const displayBlockButton = () => {
     if (custom_user.uid !== uid) {
       if (!isblocker) {
-        return <>
-          <button onClick={handleOpen} className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg text-white bg-red-500 hover:bg-red-600">
-            Block user
-          </button>
-          <CustomDialogBox Fragment={Fragment} isOpen={openModal} handleClose={handleCloseModal} handleTask={taskHandler} message={'Are you sure you want to block this user?'} />
-        </>
+        return (
+          <>
+            <button
+              onClick={handleOpen}
+              className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg text-white bg-red-500 hover:bg-red-600"
+            >
+              Block user
+            </button>
+            <CustomDialogBox
+              Fragment={Fragment}
+              isOpen={openModal}
+              handleClose={handleCloseModal}
+              handleTask={taskHandler}
+              message={"Are you sure you want to block this user?"}
+            />
+          </>
+        );
       } else {
-        return <>
-          <button onClick={handleOpenUnblockModal} className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg text-white bg-red-500 hover:bg-red-600"> Unblock user</button>
-          <CustomDialogBox Fragment={Fragment} isOpen={unblockModal} handleClose={handleCloseUnblockModal} handleTask={handleUnblock} message={'Are you sure you want to unblock this user?'} />
-        </>
+        return (
+          <>
+            <button
+              onClick={handleOpenUnblockModal}
+              className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg text-white bg-red-500 hover:bg-red-600"
+            >
+              {" "}
+              Unblock user
+            </button>
+            <CustomDialogBox
+              Fragment={Fragment}
+              isOpen={unblockModal}
+              handleClose={handleCloseUnblockModal}
+              handleTask={handleUnblock}
+              message={"Are you sure you want to unblock this user?"}
+            />
+          </>
+        );
       }
     } else {
-      return <></>
+      return <></>;
     }
-  }
+  };
 
   return (
     <Transition as={Fragment} appear show={isOpen}>
@@ -265,7 +337,6 @@ export default function AccountModal({
                       ) : (
                         <></>
                       )}
-
                     </>
                   ) : (
                     <>
@@ -291,29 +362,43 @@ export default function AccountModal({
                       ) : (
                         <></>
                       )}
-
                     </>
                   )}
 
-                  {custom_user.uid !== uid && (
-                    isblocker !== true && isblocked !== true ?
+                  {custom_user.uid !== uid &&
+                    (isblocker !== true && isblocked !== true ? (
                       <>
-                        {isInstructor === true || viewStatus === true ? <></> : <>
-                          <button onClick={() => {
-                            if (userdata?.usertype === 'Gym') {
-                              handleOpenSubscriptionModal()
-                            } else {
-                              handleFriendRequest()
-                              // for sending friend request
-                            }
-                          }} className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700">
-                            {displayMessage()}
-                          </button>
-                          <SubscriptionDialogBox data={userdata} userdoc={userdoc} handleRequest={handleRequest} isOpen={subscriptionModal} handleClose={handleCloseSubscriptionModal} Fragment={Fragment} />
-                        </>}
+                        {isInstructor === true || viewStatus === true ? (
+                          <></>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => {
+                                if (userdata?.usertype === "Gym") {
+                                  handleOpenSubscriptionModal();
+                                } else {
+                                  handleFriendRequest();
+                                  // for sending friend request
+                                }
+                              }}
+                              className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700"
+                            >
+                              {displayMessage()}
+                            </button>
+                            <SubscriptionDialogBox
+                              data={userdata}
+                              userdoc={userdoc}
+                              handleRequest={handleRequest}
+                              isOpen={subscriptionModal}
+                              handleClose={handleCloseSubscriptionModal}
+                              Fragment={Fragment}
+                            />
+                          </>
+                        )}
                       </>
-                      : <></>
-                  )}
+                    ) : (
+                      <></>
+                    ))}
 
                   {/* {custom_user.uid !== uid &&
                     !isblocker ? <>

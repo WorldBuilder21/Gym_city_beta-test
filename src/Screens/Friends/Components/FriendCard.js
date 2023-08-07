@@ -5,21 +5,20 @@ import { useSelector } from "react-redux";
 import { removeFriend } from "../../../Services/firebase";
 
 export default function FriendCard({ docId, refetch }) {
-  const { status, data: userData } = useQuery({
-    queryKey: ["friends_user"],
-    queryFn: () => getUserDataUid(docId),
-    enabled: docId != null,
-  });
+  const { status, data: userData } = useQuery(
+    {
+      queryKey: ["friends_user"],
+      queryFn: () => getUserDataUid(docId),
+      enabled: docId != null,
+    },
+    { enabled: false }
+  );
 
   const custom_user = useSelector((state) => state.user.user);
 
-  // removing frnd mutation
-  const removeFriendMutation = useMutation({
-    mutationFn: removeFriend,
-    onSuccess: (data) => {
-      refetch();
-    },
-  });
+  if (status === "loading") {
+    return <></>;
+  }
 
-  return <div>FriendCard</div>;
+  return <div></div>;
 }

@@ -20,11 +20,24 @@ export default function RequestScreen() {
   //   queryFn: () => getRequests(custom_user.uid),
   // }, { enabled: false });
 
-  const { status, error, data, refetch, hasNextPage, fetchNextPage } = useInfiniteQuery({
-    queryKey: ['requests'],
-    queryFn: () => getRequests(custom_user.uid),
-    getNextPageParam: (lastpage) => lastpage.nextPage
-  })
+  const {
+    status,
+    error,
+    data,
+    refetch,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery(
+    {
+      queryKey: ["requests"],
+      queryFn: (pageParam) => getRequests(custom_user.uid, pageParam.pageParam),
+      getNextPageParam: (lastpage) => lastpage.nextPage,
+    },
+    { enabled: false }
+  );
+
+  console.log(data?.pages)
 
   const [state, setState] = useState({
     open: false,
@@ -42,6 +55,8 @@ export default function RequestScreen() {
   const closeSnackbar = () => {
     setState({ ...state, open: false });
   };
+
+  console.log(data?.pages?.map((page, index) => page))
   return (
     <div>
       <Snackbar
@@ -76,30 +91,56 @@ export default function RequestScreen() {
         </div>
       ) : (
         <div>
-          {data.empty ? (
-            <div className="flex flex-col justify-center items-center h-screen text-gray-500">
-              <NotificationsOffIcon sx={{ fontSize: 150 }} />
-              <span className="mt-3 text-lg text-center font-semibold">
-                No one has sent you any requests.
-              </span>
-            </div>
-          ) : (
-            <div className="flex mx-2 flex-col items-center justify-center mt-10">
-              {data.pages.map((page, index) => (
+          <div className="flex mx-2 flex-col items-center justify-center mt-10">
+            {data?.pages?.map((page, index) =>
+              page?.requests.empty === 0 ? (
+                <div className="flex flex-col justify-center items-center h-screen text-gray-500">
+                  <NotificationsOffIcon sx={{ fontSize: 150 }} />
+                  <span className="mt-3 text-lg text-center font-semibold">
+                    No one has sent you any requests.
+                  </span>
+                </div>
+              ) : (
                 <div key={index} className="max-w-lg w-full">
-                  {page.requests.docs.map((request) => (
-                    <RequestCard openSnackbar={openSnackbar} refetch={refetch} item={request.data()} uid={request.data().senderId} key={index} />
+                  <button key={index} onClick={() => console.log(page?.requests)}>Click me</button>
+                  {/* <RequestCard openSnackbar={openSnackbar} uid={page.requests.senderId} refetch={refetch}  item={page} /> */}
+                  {page.requests.map((request, index) => (
+                    <div></div>
+                    // <RequestCard
+                    //   openSnackbar={openSnackbar}
+                    //   refetch={refetch}
+                    //   item={request}
+                    //   uid={request?.id}
+                    //   key={index}
+                    // />
                   ))}
                 </div>
-              ))}
-              {/* {data.pages.map((data, index) => (
+              )
+            )}
+            {/* {data.pages.map((data, index) => (
          
               ))} */}
-              {hasNextPage && (
-                <button ></button>
-              )}
-            </div>
-          )}
+            {hasNextPage && (
+              <div
+                className="flex flex-col
+                 justify-center items-center max-w-lg w-full hover:cursor-pointer"
+                onClick={() => fetchNextPage()}
+                disabled={isFetchingNextPage}
+              >
+                {isFetchingNextPage ? (
+                  <>
+                    <ComponentSkeleton />
+                    <ComponentSkeleton />
+                    <ComponentSkeleton />
+                  </>
+                ) : (
+                  <div className="text-center text-blue-500 font-semibold">
+                    Load more
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
