@@ -24,6 +24,8 @@ import ViewWorkoutRoutine from "./Screens/Home/ViewWorkoutRoutine";
 import { AuthContextProvider } from "./Context/AuthContext";
 import WeightTrackerScreen from "./Screens/Settings/WeightTrackerScreen";
 // import NotificationsScreen from "./Screens/Notifications/NotificationsScreen";
+import ComposeScreen from "./Screens/Inbox/ComposeScreen";
+import ViewMessage from "./Screens/Inbox/ViewMessage";
 import RequestScreen from "./Screens/Requests/RequestsScreen";
 import ViewFriendsScreen from "./Screens/Friends/ViewFriendsScreen";
 import MemberScreen from "./Screens/Member/MemberScreen";
@@ -45,6 +47,7 @@ function App() {
             <Route element={<UserDrawer />}>
               <Route path="/home" element={<Home />} />
               <Route path="inbox" element={<InboxScreen />} />
+
               <Route path="settings" element={<SettingsScreen />} />
               <Route path="search" element={<SearchScreen />} />
               <Route path="profile" element={<ProfileScreen />} />
@@ -57,6 +60,8 @@ function App() {
               path="/settings/viewProfile/editProfile"
               element={<EditProfileScreen />}
             />
+            <Route path="/inbox/viewMessage" element={<ViewMessage />} />
+            <Route path="/inbox/compose" element={<ComposeScreen />} />
             <Route
               path="/settings/viewProfile"
               element={<ViewProfieScreen />}
@@ -90,6 +95,7 @@ function App() {
             <Route path="/:id/friends" element={<ViewFriendsScreen />} />
             <Route path="/:id/members" element={<MemberScreen />} />
             <Route path="/:id/instructors" element={<ViewInstructorScreen />} />
+            <Route path="/:id/compose" element={<ComposeScreen />} />
 
             <Route path="/home/:id" element={<ViewPostScreen />} />
 

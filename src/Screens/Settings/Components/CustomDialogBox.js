@@ -15,7 +15,9 @@ export default function CustomDialogBox({
         initialFocus={completeButtonRef}
         as="div"
         className="relative z-10"
-        onClose={handleClose}
+        onClose={() => {
+          handleClose();
+        }}
       >
         <Transition.Child
           as={Fragment}

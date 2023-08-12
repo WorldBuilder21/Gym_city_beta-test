@@ -9,9 +9,15 @@ import RoutinePlaceHolder from "./components/RoutinePlaceHolder";
 import { sendUserRequest } from "../../../Services/firebase";
 import SubscriptionCard from "../Components/SubscriptionCard";
 
-export default function RoutineScreen({ uid, data, viewStatus, openSnackbar }) {
+export default function RoutineScreen({
+  uid,
+  data,
+  viewStatus,
+  openSnackbar,
+  handleRequest,
+}) {
   const custom_user = useSelector((state) => state.user.user);
-  const userdoc = useSelector((state) => state.userdoc.userdoc)
+  const userdoc = useSelector((state) => state.userdoc.userdoc);
   // const [viewStatus, setViewStatus] = useState(false);
   const navigate = useNavigate();
   const { status, data: routines } = useQuery(
@@ -21,11 +27,6 @@ export default function RoutineScreen({ uid, data, viewStatus, openSnackbar }) {
     },
     { enabled: false }
   );
-
-  const handleRequest = () => {
-    sendUserRequest(uid, custom_user.uid, data?.usertype === 'Gym' ? 'Membership' : data?.usertype === 'Instructor' ? 'Employment' : 'Friend')
-    openSnackbar({ message: 'Request sent successfully.' })
-  }
 
   // useEffect(() => {
   //   if (
@@ -84,10 +85,15 @@ export default function RoutineScreen({ uid, data, viewStatus, openSnackbar }) {
             />
           );
         } else {
-          return
-          <div className="mt-40">
-            <SubscriptionCard handleRequest={handleRequest} data={data} userdoc={userdoc} />
-          </div>
+          return (
+            <div className="mt-40">
+              <SubscriptionCard
+                handleRequest={handleRequest}
+                data={data}
+                userdoc={userdoc}
+              />
+            </div>
+          );
         }
       } else if (data?.routinePrivacyStatus === "Public") {
         return (

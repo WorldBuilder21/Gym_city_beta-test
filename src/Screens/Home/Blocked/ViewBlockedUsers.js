@@ -2,18 +2,33 @@ import React from "react";
 import ComponentSkeleton from "../../Components/ComponentSkeleton";
 import { viewBlockedUsers } from "../../../Services/firebase";
 import { useSelector } from "react-redux";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import ErrorMessage from "../../Components/ErrorMessage";
 import BlockIcon from "@mui/icons-material/Block";
 import BlockedUsersCard from "./components/BlockedUsersCard";
+import GroupIcon from "@mui/icons-material/Group";
 import { useNavigate } from "react-router";
 
 export default function ViewBlockedUsers() {
   const custom_user = useSelector((state) => state.user.user);
-  const { status, data, refetch } = useQuery({
-    queryKey: ["blockedUsers"],
-    queryFn: () => viewBlockedUsers(custom_user.uid),
-  });
+
+  const {
+    status,
+    error,
+    data,
+    refetch,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery(
+    {
+      queryKey: ["blocked_users"],
+      queryFn: () => viewBlockedUsers(custom_user.uid),
+      getNextPageParam: (lastpage) => lastpage.nextPage,
+    },
+    { enabled: false }
+  );
+
   const navigate = useNavigate();
   return (
     <>
@@ -61,21 +76,47 @@ export default function ViewBlockedUsers() {
           </div>
         ) : (
           <div>
-            {data.empty ? (
-              <div className="flex flex-col justify-center items-center h-screen text-gray-500">
-                <BlockIcon sx={{ fontSize: 150 }} />
-                <span className="mt-3 text-lg text-center font-semibold">
-                  You have not blocked any users.
-                </span>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center justify-center mt-10">
-                {data.docs.map((data, index) => (
-                  <BlockedUsersCard key={index} />
-                ))}
-                <BlockedUsersCard />
-              </div>
-            )}
+            <div className="flex mx-2 flex-col justify-center items-center mt-10">
+              {data?.pages.map((page, index) =>
+                page?.blockedUsers.length === 0 ? (
+                  <div
+                    key={index}
+                    className="flex flex-col justify-center items-center h-screen text-gray-500"
+                  >
+                    <BlockIcon sx={{ fontSize: 150 }} />
+                    <span className="mt-3 text-lg text-center font-semibold">
+                      You have not blocked anybody
+                    </span>
+                  </div>
+                ) : (
+                  <div key={index} className="max-w-lg w-full">
+                    {page?.blockedUsers.map((user, index) => (
+                      <BlockedUsersCard key={index} />
+                    ))}
+                  </div>
+                )
+              )}
+              {hasNextPage && (
+                <div
+                  className="flex flex-col
+              justify-center items-center max-w-lg w-full hover:cursor-pointer"
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
+                >
+                  {isFetchingNextPage ? (
+                    <>
+                      <ComponentSkeleton />
+                      <ComponentSkeleton />
+                      <ComponentSkeleton />
+                    </>
+                  ) : (
+                    <div className="text-center text-blue-500 font-semibold">
+                      Load more
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

@@ -10,7 +10,13 @@ import { useNavigate } from "react-router";
 import Chip from "@mui/material/Chip";
 import { useSelector } from "react-redux";
 
-export default function RequestCard({ item, uid, refetch, openSnackbar }) {
+export default function RequestCard({
+  item,
+  uid,
+  refetch,
+  refetchCount,
+  openSnackbar,
+}) {
   const navigate = useNavigate();
   const custom_user = useSelector((state) => state.user.user);
 
@@ -28,13 +34,13 @@ export default function RequestCard({ item, uid, refetch, openSnackbar }) {
 
   const handleAccept = async () => {
     try {
-      console.log("I have been clicked!");
-      console.log(item.senderId);
-      console.log(uid);
-      console.log("userdoc:", custom_user.uid);
+      console.log("item:", item?.requestType);
+      console.log("uid:", uid);
+      console.log(custom_user.uid);
       await acceptRequest(custom_user.uid, uid, item?.requestType);
       openSnackbar({ message: "Request accepted." });
       refetch();
+      refetchCount();
     } catch (error) {
       console.log(error);
       openSnackbar({ message: "An error has occured.", severity: "error" });
@@ -44,6 +50,8 @@ export default function RequestCard({ item, uid, refetch, openSnackbar }) {
   const handleDecline = async () => {
     await declineRequest(custom_user.uid, uid);
     openSnackbar({ message: "Request declined.", severity: "error" });
+    refetch();
+    refetchCount();
   };
 
   const displayMessage = () => {
@@ -57,7 +65,7 @@ export default function RequestCard({ item, uid, refetch, openSnackbar }) {
   };
 
   return (
-    <div className="flex flex-col  m-2 hover:cursor-pointer  rounded-lg p-3 shadow">
+    <div className="flex flex-col mb-5  m-2 hover:cursor-pointer  rounded-lg p-3 shadow">
       {/* <p className='flex items-center'>
       <span onClick={() => {navigate(`/${uid}`)}} className='flex border w-fit hover:bg-gray-100 p-1 rounded-full'>
         <Avatar sx={{width:30, height: 30}} src={userdata?.photoUrl}/>

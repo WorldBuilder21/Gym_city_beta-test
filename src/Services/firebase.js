@@ -31,6 +31,7 @@ import {
   getCountFromServer,
   deleteDoc,
   deleteField,
+  arrayRemove,
 } from "firebase/firestore";
 import {
   deleteObject,
@@ -38,8 +39,7 @@ import {
   ref,
   uploadBytes,
 } from "firebase/storage";
-import { useId } from "react";
-import { useSelector } from "react-redux";
+import { findWeekNumberForDay } from "./timeDateutils";
 
 export const googleSignIn = () => {
   const provider = new GoogleAuthProvider();
@@ -61,8 +61,11 @@ export const createUser = async ({
   return createUserWithEmailAndPassword(auth, email, password).then(
     async (result) => {
       const user = result.user;
+      const ts = serverTimestamp();
+      const date = new Date(ts.seconds * 1000 + ts.nanoseconds / 1000000);
       const docRef = doc(db, "users", user.uid);
       const weightRef = doc(db, "users", user.uid, "weights", user.uid);
+      const recordRef = collection(db, "users", user.uid, "records");
       await setDoc(docRef, {
         docId: user.uid,
         username,
@@ -80,9 +83,22 @@ export const createUser = async ({
         postPrivacyStatus: "Private",
         routinePrivacyStatus: "Private",
       }).then(async (_) => {
+        // goal setting
+        // record keeping
+        await addDoc(recordRef, {
+          ts: serverTimestamp(),
+          weight,
+          month: date.getMonth(),
+          year: date.getFullYear(),
+          week: findWeekNumberForDay({
+            year: date.getFullYear(),
+            month: date.getMonth(),
+            day: date.getDay(),
+          }),
+        });
         await setDoc(weightRef, {
           lastEntryDate: serverTimestamp(),
-          currentWeight: weight,
+          currentWeight: parseInt(weight),
           targetWeight: "",
           goalStatus: "",
         });
@@ -107,6 +123,9 @@ export const createUserDoc = async ({
   const docRef = doc(db, "users", uid);
   // this collection will be where lastentrydate, current weight, starting weight, goal status will be stored
   const weightRef = doc(db, "users", uid, "weights", uid);
+  const ts = serverTimestamp();
+  const date = new Date(ts.seconds * 1000 + ts.nanoseconds / 1000000);
+  const recordRef = collection(db, "users", uid, "records");
   // const recordRef = doc(db, "users", uid, "weights", uid, "records");
   await setDoc(docRef, {
     docId: uid,
@@ -125,11 +144,24 @@ export const createUserDoc = async ({
     postPrivacyStatus: "Private",
     routinePrivacyStatus: "Private",
   }).then(async (_) => {
+    // goal setting
     await setDoc(weightRef, {
       lastEntryDate: serverTimestamp(),
-      currentWeight: weight,
+      currentWeight: parseInt(weight),
       targetWeight: "",
       goalStatus: "",
+    });
+
+    await addDoc(recordRef, {
+      ts: serverTimestamp(),
+      weight,
+      month: date.getMonth(),
+      year: date.getFullYear(),
+      week: findWeekNumberForDay({
+        year: date.getFullYear(),
+        month: date.getMonth(),
+        day: date.getDay(),
+      }),
     });
 
     // await addDoc(recordRef, {
@@ -167,8 +199,9 @@ export const creatGymDoc = async ({
     hiringStatus: "hiring",
   });
   await setDoc(memberRef, {
-    docId: uid,
+    memberId: uid,
     type: "admin",
+    ts: serverTimestamp(),
   });
 };
 
@@ -233,10 +266,16 @@ export const doesUserNameExist = async (username) => {
     if (!querySnapshot.empty) {
       console.log("query_snapshot:", querySnapshot);
       if (querySnapshot.docs.length > 0) {
-        return true;
+        return {
+          exist: true,
+          data: querySnapshot.docs.map((doc) => ({
+            id: doc.id,
+            ...doc.data(),
+          })),
+        };
       }
     } else {
-      return false;
+      return { exist: false, data: {} };
     }
   } catch (error) {
     console.log(error);
@@ -429,6 +468,8 @@ export const handlePaginateComments = async (docId, uid, pageParam = null) => {
   };
 };
 
+// --------------------------------------------------------------------------
+
 export const recieveGraphData = async (uid) => {
   const docRef = doc(db, "users", uid, "weights", uid);
   const docSnap = await getDoc(docRef);
@@ -437,39 +478,163 @@ export const recieveGraphData = async (uid) => {
 
 export const queryData = async (uid, month, year) => {
   const q = query(
-    collection(db, "users", uid, "weights", uid, "records"),
+    collection(db, "users", uid, "records"),
     where("month", "==", month),
-    where("year", "==", year)
+    where("year", "==", year),
+    orderBy("week", "asc")
   );
   const querySnapshot = await getDocs(q);
-  return querySnapshot.docs;
+  return querySnapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data().weight,
+  }));
 };
 
+export const addRecordEntry = async ({
+  uid,
+  weight,
+  goalStatus,
+  currentWeight,
+  previousWeight,
+  targetWeight,
+  previousPercentage,
+  week1Weight,
+  // month,
+  // year,
+}) => {
+  const collectionRef = collection(db, "users", uid, "records");
+  const weightRef = doc(db, "users", uid, "weights", uid);
+  const ts = serverTimestamp();
+  const date = new Date(ts.seconds * 1000 + ts.nanoseconds / 1000000);
+  if (goalStatus === "") {
+    await addDoc(collectionRef, {
+      ts: serverTimestamp(),
+      weight,
+      month: date.getMonth(),
+      year: date.getFullYear(),
+      week: findWeekNumberForDay({
+        year: date.getFullYear(),
+        month: date.getMonth(),
+        day: date.getDay(),
+      }),
+    });
+  } else {
+    const currentPercentage =
+      (currentWeight - previousWeight / targetWeight - week1Weight) * 100;
+
+    const overallPercentage = currentPercentage + previousPercentage;
+
+    const percentageChange =
+      (currentPercentage - previousPercentage / previousPercentage) * 100;
+
+    if (Math.sign(percentageChange) === 1) {
+      // percentage increase
+      await updateDoc(weightRef, {
+        PercentageIncrease: percentageChange,
+        PercentageDecrease: 0,
+      });
+    } else if (Math.sign(percentageChange) === -1) {
+      // percentage decrease
+      await updateDoc(weightRef, {
+        PercentageDecrease: percentageChange,
+        PercentageIncrease: 0,
+      });
+    }
+
+    const weightGainOrLoss = currentWeight - previousWeight;
+
+    if (Math.sign(weightGainOrLoss) === 1) {
+      await updateDoc(weightRef, {
+        WeightGain: weightGainOrLoss,
+        WeightLoss: 0,
+      });
+    } else {
+      await updateDoc(weightRef, {
+        WeightGain: 0,
+        WeightLoss: weightGainOrLoss,
+      });
+    }
+
+    await updateDoc(weightRef, {
+      overallPercentage,
+      currentPercentage: currentPercentage,
+      previousPercentage: previousPercentage,
+      currentWeight,
+      previousWeight,
+      lastEntryDate: serverTimestamp(),
+    });
+    // percentage increase, percentage decrease, weight gained weight lost,
+    // shifting of current weight and previous weight
+    // updating of overall percentage and previous percentage
+    await addDoc(collectionRef, {
+      ts: serverTimestamp(),
+      weight,
+      month: date.getMonth(),
+      year: date.getFullYear(),
+      week: findWeekNumberForDay({
+        day: date.getDay(),
+        month: date.getMonth(),
+        year: date.getFullYear(),
+      }),
+    });
+  }
+};
+
+// creating the goal
 export const updateGoalDoc = async ({
   uid,
   targetWeight,
   currentWeight,
   goalStatus,
   deadline,
+  totalWeeks,
 }) => {
   const docRef = doc(db, "users", uid, "weights", uid);
   const userRef = doc(db, "users", uid);
+  const collectionRef = collection(db, "users", uid, "records");
+  const ts = serverTimestamp();
+  const date = new Date(ts.seconds * 1000 + ts.nanoseconds / 1000000);
   await updateDoc(docRef, {
-    targetWeight,
-    currentWeight,
+    targetWeight: parseInt(targetWeight),
+    currentWeight: parseInt(currentWeight),
     goalStatus,
+    week1Weight: parseInt(currentWeight),
     // used for tracking weight
     lastEntryDate: serverTimestamp(),
 
     // used for goal tracking
     startDate: serverTimestamp(),
     deadline,
+    totalWeeks,
+    PercentageIncrease: 0,
+    PercentageDecrease: 0,
+    WeightLoss: 0,
+    WeightGain: 0,
     previousWeight: 0,
+    currentPercentage: 0,
+    previousPercentage: 0,
+    overallPercentage: 0,
   });
 
-  await updateDoc(docRef, {
-    weight: currentWeight,
+  await updateDoc(userRef, {
+    weight: parseInt(currentWeight),
   });
+
+  await addDoc(collectionRef, {
+    ts: serverTimestamp(),
+    weight: parseInt(currentWeight),
+    month: date.getMonth(),
+    year: date.getFullYear(),
+    week: findWeekNumberForDay({
+      day: date.getDay(),
+      month: date.getMonth(),
+      year: date.getFullYear(),
+    }),
+  });
+
+  // await updateDoc(docRef, {
+  //   weight: currentWeight,
+  // });
 };
 
 export const deleteGoalDoc = async ({ uid }) => {
@@ -477,9 +642,12 @@ export const deleteGoalDoc = async ({ uid }) => {
   await updateDoc(docRef, {
     goalStatus: "",
     targetWeight: "",
-    previousWeight: deleteField(),
+    nextWeekWeight: deleteField(),
     deadline: deleteField(),
     startDate: deleteField(),
+    week1Weight: deleteField(),
+    totalWeeks: deleteField(),
+    currentWeek: deleteField(),
   });
 };
 
@@ -518,6 +686,23 @@ export const editGoalDoc = async ({
   }
 };
 
+// -----------------------------------------------------------------------------
+
+export const leaveGym = async (uid, docId) => {
+  const userRef = doc(db, "users", uid);
+  const memberRef = doc(db, "users", docId, "members", uid);
+
+  await deleteDoc(memberRef);
+  await updateDoc(userRef, {
+    memberships: arrayRemove(docId),
+  });
+};
+
+export const blockGym = async (uid, docId) => {
+  await leaveGym(uid, docId);
+  await blockUser(uid, docId);
+};
+
 export const top_gym = async () => {
   const collection_ref = collection(db, "users");
   const q = query(collection_ref, where("usertype", "==", "Gym"), limit(5));
@@ -540,24 +725,28 @@ export const getRequests = async (uid, nextPageParam = undefined) => {
   const collection_ref = collection(db, "users", uid, "requests");
 
   // const q = query(collection_ref,orderBy("ts", "desc"), startAfter(pageParam) ,limit(15));
-  let q = query(collection_ref, orderBy('ts', 'desc'), limit(15) )
+  let q = query(collection_ref, orderBy("ts", "desc"), limit(15));
 
-  if(nextPageParam !== undefined){
-    q = query(collection_ref, orderBy('ts', 'desc'), startAfter(nextPageParam), limit(15))
+  if (nextPageParam !== undefined) {
+    q = query(
+      collection_ref,
+      orderBy("ts", "desc"),
+      startAfter(nextPageParam),
+      limit(15)
+    );
   }
 
   const snapshot = await getDocs(q);
 
-  const requests = snapshot.docs.map((doc) => ({id: doc.id, ...doc.data()}))
+  const requests = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
   const hasNextPage = requests.length === 15;
 
-  const lastRequest = snapshot.docs[snapshot.docs.length - 1]
+  const lastRequest = snapshot.docs[snapshot.docs.length - 1];
 
-  const nextPage = hasNextPage ? lastRequest : undefined
+  const nextPage = hasNextPage ? lastRequest : undefined;
 
-  return {requests, nextPage: nextPage}
-
+  return { requests, nextPage: nextPage };
 };
 
 export const getTestUsers = async () => {
@@ -569,43 +758,75 @@ export const getTestUsers = async () => {
 
 export const removeFriend = async (uid, docId) => {
   const docRef = doc(db, "users", uid, "friends", docId);
+  const userRef = doc(db, "users", docId, "friends", uid);
+  await deleteDoc(userRef);
   return await deleteDoc(docRef);
 };
 
-export const viewFriends = async (uid) => {
+export const viewFriends = async (uid, nextPageParam = undefined) => {
   const collection_ref = collection(db, "users", uid, "friends");
-  const q = query(collection_ref, limit(15));
-  let friends = await getDocs(q);
+  const q = query(collection_ref, orderBy("ts", "desc"), limit(15));
 
-  const lastVisible = friends.docs[friends.docs.length - 1];
-
-  if (lastVisible === 15) {
-    const next = query(collection_ref, startAfter(lastVisible), limit(15));
-    friends = await getDocs(next);
+  if (nextPageParam !== undefined) {
+    q = query(
+      collection_ref,
+      orderBy("ts", "desc"),
+      startAfter(nextPageParam),
+      limit(15)
+    );
   }
-  return {
-    friends,
-    nextPage: lastVisible,
-  };
+
+  const snapshot = await getDocs(q);
+
+  const friends = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
+  const hasNextPage = friends.length === 15;
+
+  const lastDocs = snapshot.docs[snapshot.docs.length - 1];
+
+  const nextPage = hasNextPage ? lastDocs : undefined;
+
+  return { friends, nextPage };
 };
 
 // VIEW INSTRUCTORS (Gyms)
-export const viewInstructors = async (uid) => {
+export const viewInstructors = async (uid, nextPageParam = undefined) => {
   const collectionRef = collection(db, "users", uid, "instructors");
-  const q = query(collectionRef, limit(15));
-  let instructors = await getDocs(q);
+  let q = query(collectionRef, orderBy("ts", "desc"), limit(15));
 
-  const lastVisible = instructors.docs[instructors.docs.length - 1];
-
-  if (lastVisible === 15) {
-    const next = query(collectionRef, startAfter(lastVisible), limit(15));
-    instructors = await getDocs(next);
+  if (nextPageParam !== undefined) {
+    q = query(
+      collectionRef,
+      orderBy("ts", "desc"),
+      startAfter(nextPageParam),
+      limit(15)
+    );
   }
 
-  return {
-    instructors,
-    nextPage: lastVisible,
-  };
+  const snapshot = await getDocs(q);
+
+  const instructors = snapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+
+  const hasNextPage = instructors.length === 15;
+
+  const lastDocs = snapshot.docs[snapshot.docs.length - 1];
+
+  const nextPage = hasNextPage ? lastDocs : undefined;
+
+  return { instructors, nextPage };
+};
+
+export const removeInstructor = async (uid, docId) => {
+  const docRef = doc(db, "users", uid, "instructors", docId);
+  await deleteDoc(docRef);
+  const userRef = doc(db, "users", docId);
+
+  await updateDoc(userRef, {
+    memberships: arrayRemove(uid),
+  });
 };
 
 export const checkIfInstructor = async (uid, docId) => {
@@ -615,22 +836,53 @@ export const checkIfInstructor = async (uid, docId) => {
 };
 
 // VIEWING MEMBERS (Gyms)
-export const viewMembers = async (uid) => {
+export const viewMembers = async (uid, nextPageParam = undefined) => {
   const collectionRef = collection(db, "users", uid, "members");
-  const q = query(collectionRef, limit(15));
-  let members = await getDocs(q);
+  let q = query(collectionRef, orderBy("ts", "desc"), limit(15));
 
-  const lastVisible = members.docs[members.docs.length - 1];
-
-  if (lastVisible === 15) {
-    const next = query(collectionRef, startAfter(lastVisible), limit(15));
-    members = await getDocs(next);
+  if (nextPageParam !== undefined) {
+    q = query(
+      collectionRef,
+      orderBy("ts", "desc"),
+      startAfter(nextPageParam),
+      limit(15)
+    );
   }
+  const snapshot = await getDocs(q);
 
-  return {
-    members,
-    nextPage: lastVisible,
-  };
+  const members = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
+  const hasNextPage = members.length === 15;
+
+  const lastDocs = snapshot.docs[snapshot.docs.length - 1];
+
+  const nexPage = hasNextPage ? lastDocs : undefined;
+
+  return { members, nexPage };
+};
+
+export const getRequestsCount = async (uid) => {
+  const requestRef = collection(db, "users", uid, "requests");
+  const requestCount = await getCountFromServer(requestRef);
+  return requestCount.data().count;
+};
+
+export const getFriendCount = async (uid) => {
+  const friendRef = collection(db, "users", uid, "friends");
+  const friendCount = await getCountFromServer(friendRef);
+  return friendCount.data().count;
+};
+
+export const getMemberCount = async (uid) => {
+  const memberRef = collection(db, "users", uid, "members");
+  const memberCount = await getCountFromServer(memberRef);
+  return memberCount.data().count;
+};
+
+export const getInstructorCount = async (uid) => {
+  const instructorRef = collection(db, "users", uid, "instructors");
+  const instructorCount = await getCountFromServer(instructorRef);
+  return instructorCount.data().count;
 };
 
 export const checkifFriendOrMember = async (uid, docId, type) => {
@@ -645,17 +897,22 @@ export const checkifFriendOrMember = async (uid, docId, type) => {
   }
 };
 
-export const addMember = async (uid, docId, type) => {
-  const docRef = collection(db, "users", uid, "members", docId);
-  return await setDoc(docRef, {
-    memberId: docId,
-    joined: serverTimestamp(),
-    type: type,
-  });
-};
+// export const addMember = async (uid, docId, type) => {
+//   const docRef = collection(db, "users", uid, "members", docId);
+//   return await setDoc(docRef, {
+//     memberId: docId,
+//     ts: serverTimestamp(),
+//     type: type,
+//   });
+// };
 
 export const removeMember = async (uid, docId) => {
   const docRef = doc(db, "users", uid, "members", docId);
+  const userRef = doc(db, "users", docId);
+
+  await updateDoc(userRef, {
+    memberships: arrayRemove(uid),
+  });
   return await deleteDoc(docRef);
 };
 
@@ -696,6 +953,9 @@ export const declineRequest = async (uid, docId) => {
 };
 
 export const acceptRequest = async (uid, docId, requestType) => {
+  console.log(requestType);
+  console.log(docId);
+  console.log(uid);
   // for friends requests u have to add the document to in the friends collection of both the users
   if (requestType === "friend") {
     const docRef = doc(db, "users", uid, "friends", docId);
@@ -710,19 +970,27 @@ export const acceptRequest = async (uid, docId, requestType) => {
     });
     const requestRef = doc(db, "users", uid, "requests", docId);
     await deleteDoc(requestRef);
-  }
-  if (requestType === "Membership") {
+  } else if (requestType === "Membership") {
     const docRef = doc(db, "users", uid, "members", docId);
+    const userRef = doc(db, "users", docId);
     await setDoc(docRef, {
       ts: serverTimestamp(),
       memberId: docId,
+      type: "member",
     });
-  }
-  if (requestType === "Employment") {
+    await updateDoc(userRef, {
+      memberships: arrayUnion(uid),
+    });
+  } else if (requestType === "Employment") {
     const docRef = doc(db, "users", uid, "instructors", docId);
+    const userRef = doc(db, "users", docId);
     await setDoc(docRef, {
       ts: serverTimestamp(),
       instructorId: docId,
+    });
+
+    await updateDoc(userRef, {
+      memberships: arrayUnion(uid),
     });
   }
 };
@@ -805,10 +1073,34 @@ export const checkAccountsBlocked = async (uid, docId) => {
   return docSnap;
 };
 
-export const viewBlockedUsers = async (uid) => {
+export const viewBlockedUsers = async (uid, nextPageParam = undefined) => {
   const collectionRef = collection(db, "users", uid, "blocked");
 
-  let q  = query(collectionRef, orderBy('ts', 'desc'), limit(15))
+  let q = query(collectionRef, orderBy("ts", "desc"), limit(15));
+
+  if (nextPageParam !== undefined) {
+    q = query(
+      collectionRef,
+      orderBy("ts", "desc"),
+      startAfter(nextPageParam),
+      limit(15)
+    );
+  }
+
+  const snapshot = await getDocs(q);
+
+  const blockedUsers = snapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data(),
+  }));
+
+  const hasNextPage = blockedUsers.length === 15;
+
+  const lastDocs = snapshot.docs[snapshot.docs.length - 1];
+
+  const nextPage = hasNextPage ? lastDocs : undefined;
+
+  return { blockedUsers, nextPage: nextPage };
 };
 
 // user would be blocked from sending request to user, messaging, joining gym and will not be able to view users profile
@@ -835,6 +1127,16 @@ export const blockUser = async (uid, docId) => {
     ts: serverTimestamp(),
     blockerId: uid,
   });
+};
+
+export const blockInstructor = async (uid, docId) => {
+  await removeInstructor(uid, docId);
+  await blockUser(uid, docId);
+};
+
+export const blockFriend = async (uid, docId) => {
+  await removeFriend(uid, docId);
+  await blockUser(uid, docId);
 };
 
 export const unblockUser = async (uid, docId) => {

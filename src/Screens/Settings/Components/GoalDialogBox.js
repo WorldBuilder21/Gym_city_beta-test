@@ -12,6 +12,7 @@ import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers";
 import moment from "moment";
+import dayjs from "dayjs";
 
 const goalTypes = [{ name: "Lossing weight" }, { name: "Gaining weight" }];
 
@@ -27,6 +28,8 @@ export default function GoalDialogBox({
   const { handleSubmit, getValues, control, watch, reset } = useForm();
   const custom_user = useSelector((state) => state.user.user);
   const [pickedDate, setPickedDate] = useState();
+
+  const minDate = new Date();
 
   const goalMutation = useMutation({
     mutationFn: updateGoalDoc,
@@ -49,6 +52,8 @@ export default function GoalDialogBox({
     const millisecondsPerWeek = 7 * 24 * 60 * 60 * 1000;
     const totalWeeks = Math.ceil((endDate - currentDate) / millisecondsPerWeek);
 
+    // setNumberOfWeeks(totalWeeks);
+
     return totalWeeks;
   }
 
@@ -57,12 +62,14 @@ export default function GoalDialogBox({
     const { current_weight, target_weight, deadline } = getValues();
     // console.log(new Date(deadline));
     setIsLoading(true);
+    const numberOfWeek = getTotalWeeksBetweenMonths(deadline);
     goalMutation.mutate({
       uid: custom_user.uid,
       currentWeight: current_weight,
       targetWeight: target_weight,
       goalStatus: selectedType,
       deadline: new Date(deadline),
+      totalWeeks: numberOfWeek,
     });
   };
   return (
@@ -234,6 +241,8 @@ export default function GoalDialogBox({
                           className="w-full"
                           onChange={onChange}
                           value={pickedDate}
+                          // minDate={dayjs(new Date()).toDate()}
+                          minDate={dayjs(minDate)}
                           label="Deadline"
                           views={["month", "year"]}
                           slotProps={{

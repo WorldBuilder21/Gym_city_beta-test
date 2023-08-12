@@ -14,10 +14,15 @@ const Alert = React.forwardRef(function Alert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
 });
 
-export default function PostScreen({ uid, user_data, viewStatus }) {
+export default function PostScreen({
+  uid,
+  user_data,
+  viewStatus,
+  handleRequest,
+}) {
   // used to show the person viewing the profile
   const custom_user = useSelector((state) => state.user.user);
-  const userdoc = useSelector((state) => state.userdoc.userdoc)
+  const userdoc = useSelector((state) => state.userdoc.userdoc);
   // the person viewing
   const [openModal, setOpenModal] = useState(false);
   const [state, setState] = useState({
@@ -45,10 +50,6 @@ export default function PostScreen({ uid, user_data, viewStatus }) {
     setOpenModal(false);
   };
 
-  const handleRequest = () => {
-
-  }
-
   const openPostModal = () => {
     setOpenModal(true);
   };
@@ -62,10 +63,13 @@ export default function PostScreen({ uid, user_data, viewStatus }) {
   };
 
   const handleTask = () => {
-    sendUserRequest(uid, custom_user.uid, user_data?.usertype === 'Gym' ? 'Membership' : 'Friends')
-    openSnackbar({ message: 'Request sent successfully.' })
-  }
-
+    sendUserRequest(
+      uid,
+      custom_user.uid,
+      user_data?.usertype === "Gym" ? "Membership" : "Friends"
+    );
+    openSnackbar({ message: "Request sent successfully." });
+  };
 
   const displayFunction = () => {
     if (custom_user.uid === uid) {
@@ -80,10 +84,78 @@ export default function PostScreen({ uid, user_data, viewStatus }) {
           openPostModal={openPostModal}
           uid={uid}
         />
-      )
+      );
     } else {
-      if (user_data?.postPrivacyStatus === "Private") {
-        if (custom_user.uid === uid) {
+      console.log("switchCase:", user_data?.postPrivacyStatus);
+      // switch (user_data?.postPrivacyStatus) {
+      //   case "Friend only" && "Members only":
+      //     console.log("Hello World");
+      //     return <div>Hello World</div>;
+      //   default:
+      //     break;
+      // }
+      switch (user_data?.postPrivacyStatus) {
+        case "Friends only" && "Members only":
+          switch (viewStatus) {
+            case true:
+              return (
+                <PostPlaceholder
+                  posts={posts}
+                  custom_user={custom_user}
+                  Fragment={Fragment}
+                  openModal={openModal}
+                  openSnackbar={openSnackbar}
+                  closeModal={closeModal}
+                  openPostModal={openPostModal}
+                  uid={uid}
+                />
+              );
+            case false:
+              return (
+                <div className="mt-40">
+                  <SubscriptionCard
+                    handleRequest={handleRequest}
+                    data={user_data}
+                    userdoc={userdoc}
+                  />
+                </div>
+              );
+            default:
+              break;
+          }
+          break;
+
+        case "Private":
+          switch (custom_user.uid === uid) {
+            case true:
+              return (
+                <PostPlaceholder
+                  posts={posts}
+                  custom_user={custom_user}
+                  Fragment={Fragment}
+                  openModal={openModal}
+                  openSnackbar={openSnackbar}
+                  closeModal={closeModal}
+                  openPostModal={openPostModal}
+                  uid={uid}
+                />
+              );
+
+            case false:
+              return (
+                <div className="flex flex-col justify-center items-center mt-40">
+                  <span className="text-center font-semibold text-gray-400 mt-2 text-xl">
+                    This users posts are private.
+                  </span>
+                </div>
+              );
+
+            default:
+              break;
+          }
+          break;
+
+        case "Public":
           return (
             <PostPlaceholder
               posts={posts}
@@ -96,65 +168,94 @@ export default function PostScreen({ uid, user_data, viewStatus }) {
               uid={uid}
             />
           );
-        } else {
-          return (
-            <div className="flex flex-col justify-center items-center mt-40">
-              <span className="text-center font-semibold text-gray-400 mt-2 text-xl">
-                This users posts are private.
-              </span>
-            </div>
-          );
-        }
-      } else if (
-        user_data?.postPrivacyStatus === "Friends only" ||
-        user_data?.postPrivacyStatus === "Members only"
-      ) {
-        console.log("Hello???");
-        if (viewStatus === true) {
-          return (
-            <PostPlaceholder
-              posts={posts}
-              custom_user={custom_user}
-              Fragment={Fragment}
-              openModal={openModal}
-              openSnackbar={openSnackbar}
-              closeModal={closeModal}
-              openPostModal={openPostModal}
-              uid={uid}
-            />
-          );
-        } else {
-          return <div className="mt-40">
-            <SubscriptionCard handleRequest={handleRequest} data={user_data} userdoc={userdoc} />
-          </div>
-        }
-      } else if (user_data?.postPrivacyStatus === "Public") {
-        return (
-          <PostPlaceholder
-            posts={posts}
-            custom_user={custom_user}
-            Fragment={Fragment}
-            openModal={openModal}
-            openSnackbar={openSnackbar}
-            closeModal={closeModal}
-            openPostModal={openPostModal}
-            uid={uid}
-          />
-        );
-      } else {
-        return (
-          <></>
-          // <div className="flex flex-col mt-40 justify-center items-center">
-          //   <span className="text-center font-semibold text-red-500 mt-2 text-xl">
-          //     Invalid privacy status
-          //   </span>
-          // </div>
-        );
+
+        default:
+          break;
       }
+
+      // if (
+      //   user_data?.postPrivacyStatus === "Friends only" ||
+      //   user_data?.postPrivacyStatus === "Members only"
+      // ) {
+      //   console.log("Hello???");
+      //   if (viewStatus === true) {
+      //     return (
+      //       <PostPlaceholder
+      //         posts={posts}
+      //         custom_user={custom_user}
+      //         Fragment={Fragment}
+      //         openModal={openModal}
+      //         openSnackbar={openSnackbar}
+      //         closeModal={closeModal}
+      //         openPostModal={openPostModal}
+      //         uid={uid}
+      //       />
+      //     );
+      //   } else {
+      //     return (
+      //       <div className="mt-40">
+      //         <SubscriptionCard
+      //           handleRequest={handleRequest}
+      //           data={user_data}
+      //           userdoc={userdoc}
+      //         />
+      //       </div>
+      //     );
+      //   }
+      // }
+      // if (user_data?.postPrivacyStatus === "Private") {
+      //   if (custom_user.uid === uid) {
+      //     return (
+      //       <PostPlaceholder
+      //         posts={posts}
+      //         custom_user={custom_user}
+      //         Fragment={Fragment}
+      //         openModal={openModal}
+      //         openSnackbar={openSnackbar}
+      //         closeModal={closeModal}
+      //         openPostModal={openPostModal}
+      //         uid={uid}
+      //       />
+      //     );
+      //   } else {
+      //     return (
+      //       <div className="flex flex-col justify-center items-center mt-40">
+      //         <span className="text-center font-semibold text-gray-400 mt-2 text-xl">
+      //           This users posts are private.
+      //         </span>
+      //       </div>
+      //     );
+      //   }
+      // }
+
+      // if (user_data?.postPrivacyStatus === "Public") {
+      //   return (
+      //     <PostPlaceholder
+      //       posts={posts}
+      //       custom_user={custom_user}
+      //       Fragment={Fragment}
+      //       openModal={openModal}
+      //       openSnackbar={openSnackbar}
+      //       closeModal={closeModal}
+      //       openPostModal={openPostModal}
+      //       uid={uid}
+      //     />
+      //   );
+      // } else {
+      //   return (
+      //     <></>
+      //     // <div className="flex flex-col mt-40 justify-center items-center">
+      //     //   <span className="text-center font-semibold text-red-500 mt-2 text-xl">
+      //     //     Invalid privacy status
+      //     //   </span>
+      //     // </div>
+      //   );
+      // }
     }
   };
 
   console.log(user_data?.postPrivacyStatus);
+  console.log("user_data:", user_data);
 
   return (
     <>

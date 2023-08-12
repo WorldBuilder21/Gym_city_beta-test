@@ -57,7 +57,7 @@ function InstructorScreen({ openSnackbar, closeSnackbar, selectedType }) {
     const photoUrl = provider_bool ? custom_user.photoURL : "";
     setIsLoading(true);
     const usernameExists = await doesUserNameExist(username);
-    if (usernameExists === false) {
+    if (usernameExists.exist === false) {
       try {
         if (provider_bool === false) {
           await createUser({

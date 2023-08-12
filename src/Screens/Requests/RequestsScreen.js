@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { getRequests } from "../../Services/firebase";
+import { getRequests, getRequestsCount } from "../../Services/firebase";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useSelector } from "react-redux";
 import ErrorMessage from "../Components/ErrorMessage";
@@ -37,7 +37,22 @@ export default function RequestScreen() {
     { enabled: false }
   );
 
-  console.log(data?.pages)
+  const {
+    status: count_status,
+    data: count,
+    refetch: refetch_count,
+  } = useQuery(
+    {
+      queryKey: ["count_instructors"],
+      queryFn: () => getRequestsCount(custom_user.uid),
+    },
+    { enabled: false }
+  );
+
+  const request_count =
+    count_status === "loading" ? 0 : count_status === "error" ? 0 : count;
+
+  console.log(data?.pages);
 
   const [state, setState] = useState({
     open: false,
@@ -56,7 +71,7 @@ export default function RequestScreen() {
     setState({ ...state, open: false });
   };
 
-  console.log(data?.pages?.map((page, index) => page))
+  console.log(data?.pages?.map((page, index) => page));
   return (
     <div>
       <Snackbar
@@ -92,9 +107,18 @@ export default function RequestScreen() {
       ) : (
         <div>
           <div className="flex mx-2 flex-col items-center justify-center mt-10">
+            <div className="w-full max-w-lg">
+              <span className="font-semibold text-2xl">
+                Requests · {request_count}
+              </span>
+              <div className="w-full h-0.5 mt-2 mb-5 bg-gray-100 rounded-full" />
+            </div>
             {data?.pages?.map((page, index) =>
-              page?.requests.empty === 0 ? (
-                <div className="flex flex-col justify-center items-center h-screen text-gray-500">
+              page?.requests.length === 0 ? (
+                <div
+                  key={index}
+                  className="flex flex-col justify-center items-center h-screen text-gray-500"
+                >
                   <NotificationsOffIcon sx={{ fontSize: 150 }} />
                   <span className="mt-3 text-lg text-center font-semibold">
                     No one has sent you any requests.
@@ -102,17 +126,16 @@ export default function RequestScreen() {
                 </div>
               ) : (
                 <div key={index} className="max-w-lg w-full">
-                  <button key={index} onClick={() => console.log(page?.requests)}>Click me</button>
                   {/* <RequestCard openSnackbar={openSnackbar} uid={page.requests.senderId} refetch={refetch}  item={page} /> */}
                   {page.requests.map((request, index) => (
-                    <div></div>
-                    // <RequestCard
-                    //   openSnackbar={openSnackbar}
-                    //   refetch={refetch}
-                    //   item={request}
-                    //   uid={request?.id}
-                    //   key={index}
-                    // />
+                    <RequestCard
+                      openSnackbar={openSnackbar}
+                      refetch={refetch}
+                      refetchCount={refetch_count}
+                      item={request}
+                      uid={request?.id}
+                      key={index}
+                    />
                   ))}
                 </div>
               )

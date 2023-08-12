@@ -11,7 +11,10 @@ import { useSelector } from "react-redux";
 import { Snackbar } from "@mui/material";
 import { auth } from "../../firebase";
 import { useDispatch } from "react-redux";
-import { getUserDocData } from "../../utils/store/user/userdocDataSlice";
+import {
+  clearState,
+  getUserDocData,
+} from "../../utils/store/user/userdocDataSlice";
 import { emailVerification, getUserDataUid } from "../../Services/firebase";
 import { UserAuth } from "../../Context/AuthContext";
 import authErrorHandler from "../../Services/autherrorhandler";
@@ -285,6 +288,7 @@ function Login() {
                 if (custom_user) {
                   logout();
                   dispatch(logoutuser());
+                  dispatch(clearState);
                 }
                 navigate("signup");
               }}

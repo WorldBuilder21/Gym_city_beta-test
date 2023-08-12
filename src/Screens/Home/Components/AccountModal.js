@@ -30,6 +30,7 @@ export default function AccountModal({
   userdata,
   request,
   isInstructor,
+  handleRequest,
 }) {
   const userdoc = useSelector((state) => state.userdoc.userdoc);
   const custom_user = useSelector((state) => state.user.user);
@@ -46,6 +47,34 @@ export default function AccountModal({
   // for the blocking modal
   const handleCloseModal = () => {
     setOpenModal(false);
+  };
+
+  // Sending friend request
+  const handleFriendRequest = async () => {
+    const request_check = await checkIfRequest(uid, custom_user.uid);
+    if (request_check === false) {
+      if (viewStatus === true) {
+        openSnackbar({
+          message: "You are already in this user's friends list.",
+          severity: "error",
+        });
+      } else if (request === true) {
+        openSnackbar({
+          message: "You have already sent this user a friend request.",
+          severity: "error",
+        });
+      } else {
+        sendUserRequest(uid, custom_user.uid, "friend", userdoc?.usertype);
+        handleClose();
+        openSnackbar({ message: "Your friend request has been sent." });
+      }
+    } else {
+      openSnackbar({
+        message: "You have already sent a request.",
+        severity: "error",
+      });
+    }
+    handleClose();
   };
 
   const handleOpenSubscriptionModal = () => {
@@ -82,80 +111,7 @@ export default function AccountModal({
     handleClose();
   };
 
-  // send membership and employment request
-  const handleRequest = async () => {
-    const request_check = await checkIfRequest(uid, custom_user.uid);
-    if (request_check === false) {
-      if (userdoc.usertype === "Instructor") {
-        if (isInstructor === true) {
-          openSnackbar({
-            message: "You are already an Instructor in this gym.",
-          });
-        } else {
-          try {
-            sendUserRequest(
-              uid,
-              custom_user.uid,
-              "Employment",
-              userdoc?.usertype
-            );
-            openSnackbar({ message: "Your employment request has been sent." });
-          } catch (error) {
-            openSnackbar({
-              message: "An error occurred while sending your requests.",
-              severity: "error",
-            });
-          }
-        }
-      } else {
-        if (viewStatus === true) {
-          openSnackbar({ message: "You are already a member in the gym." });
-        } else {
-          try {
-            sendUserRequest(
-              uid,
-              custom_user.uid,
-              "Membership",
-              userdoc?.usertype
-            );
-            openSnackbar({ message: "You membership request has been sent." });
-          } catch (error) {
-            openSnackbar({
-              message: "An error occurred while sending your requests.",
-              severity: "error",
-            });
-          }
-        }
-      }
-    } else {
-      openSnackbar({
-        message: "You have already sent a request.",
-        severity: "error",
-      });
-    }
-
-    handleClose();
-  };
-
-  // Sending friend request
-  const handleFriendRequest = async () => {
-    if (viewStatus === true) {
-      openSnackbar({
-        message: "You are already in this user's friends list.",
-        severity: "error",
-      });
-    } else if (request === true) {
-      openSnackbar({
-        message: "You have already sent this user a friend request.",
-        severity: "error",
-      });
-    } else {
-      sendUserRequest(uid, custom_user.uid, "friend", userdoc?.usertype);
-      handleClose();
-      openSnackbar({ message: "Your friend request has been sent." });
-    }
-    handleClose();
-  };
+  console.log();
 
   const handleUnblock = () => {
     unblockUser(custom_user.uid, uid);
@@ -169,6 +125,7 @@ export default function AccountModal({
     handleClose();
   };
 
+  console.log("usertype: ", userdoc.usertype);
   const displayMessage = () => {
     if (userdata?.usertype === "Gym") {
       if (userdoc?.usertype === "Instructor") {
@@ -226,181 +183,221 @@ export default function AccountModal({
     }
   };
 
-  return (
-    <Transition as={Fragment} appear show={isOpen}>
-      <Dialog as="div" className="relative z-10" onClose={handleClose}>
-        <Transition.Child
-          as={Fragment}
-          enter="ease-out duration-300"
-          enterFrom="opacity-0"
-          enterTo="opacity-100"
-          leave="ease-in duration-200"
-          leaveFrom="opacity-100"
-          leaveTo="opacity-0"
-        >
-          <div className="fixed inset-0 bg-black bg-opacity-25" />
-        </Transition.Child>
+  const handleDisabled = () => {
+    if (userdoc?.usertype === "Instructor") {
+      if (userdata?.hiringStatus === "hiring") {
+        return false;
+      } else {
+        return true;
+      }
+    } else {
+      return false;
+    }
+  };
 
-        <div className="fixed inset-0 overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4 text-center">
-            <Transition.Child
-              as={Fragment}
-              enter="ease-out duration-300"
-              enterFrom="opacity-0 scale-95"
-              enterTo="opacity-100 scale-100"
-              leave="ease-in duration-200"
-              leaveFrom="opacity-100 scale-100"
-              leaveTo="opacity-0 scale-95"
-            >
-              <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-lg bg-white p-6 text-left align-middle shadow-xl transition-all">
-                {/* member: send friend request (member)
+  console.log("hiringStatus:", userdata);
+
+  return (
+    <>
+      <SubscriptionDialogBox
+        data={userdata}
+        userdoc={userdoc}
+        handleRequest={() => {
+          handleRequest();
+          handleCloseSubscriptionModal();
+          handleClose();
+        }}
+        isOpen={subscriptionModal}
+        handleClose={handleCloseSubscriptionModal}
+        Fragment={Fragment}
+      />
+      <Transition as={Fragment} appear show={isOpen}>
+        <Dialog as="div" className="relative z-10" onClose={handleClose}>
+          <Transition.Child
+            as={Fragment}
+            enter="ease-out duration-300"
+            enterFrom="opacity-0"
+            enterTo="opacity-100"
+            leave="ease-in duration-200"
+            leaveFrom="opacity-100"
+            leaveTo="opacity-0"
+          >
+            <div className="fixed inset-0 bg-black bg-opacity-25" />
+          </Transition.Child>
+
+          <div className="fixed inset-0 overflow-y-auto">
+            <div className="flex min-h-full items-center justify-center p-4 text-center">
+              <Transition.Child
+                as={Fragment}
+                enter="ease-out duration-300"
+                enterFrom="opacity-0 scale-95"
+                enterTo="opacity-100 scale-100"
+                leave="ease-in duration-200"
+                leaveFrom="opacity-100 scale-100"
+                leaveTo="opacity-0 scale-95"
+              >
+                <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-lg bg-white p-6 text-left align-middle shadow-xl transition-all">
+                  {/* member: send friend request (member)
                     instructor: send friends request(member), send employment request, (gym)
                     gym: recieve membership request(member), send employment request to gym(instructor), recieve employment request(instructor)
                     // block users 
                 */}
-                <div className="flex flex-col space-y-2 items-center justify-center">
-                  {usertype === "Gym" ? (
-                    // if user is not a member of instructor, send memeber ship request
-                    <>
-                      {custom_user.uid === uid ? (
-                        <button className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700 ">
-                          Edit profile
-                        </button>
-                      ) : (
-                        <></>
-                      )}
-                      <button
-                        onClick={() => {
-                          if (pathname === "/profile") {
-                            navigate("/profile/members");
-                            dispatch(getUserId(" "));
-                          } else {
-                            navigate(`/${uid}/members`);
-                            dispatch(getUserId(uid));
-                          }
-                        }}
-                        className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700 "
-                      >
-                        View members
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          if (pathname === "/profile") {
-                            navigate("/profile/instructors");
-                            dispatch(getUserId(" "));
-                          } else {
-                            navigate(`/${uid}/instructors`);
-                            dispatch(getUserId(uid));
-                          }
-                        }}
-                        className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700 "
-                      >
-                        View instructors
-                      </button>
-
-                      <button className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700 ">
-                        View reviews
-                      </button>
-                    </>
-                  ) : usertype === "Instructor" ? (
-                    <>
-                      {custom_user.uid === uid ? (
-                        <button className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700 ">
-                          Edit profile
-                        </button>
-                      ) : (
-                        <></>
-                      )}
-                      <button className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700 ">
-                        View reviews
-                      </button>
-                      <button
-                        onClick={() => {
-                          if (pathname === "/profile") {
-                            navigate("/profile/friends");
-                            dispatch(getUserId(" "));
-                          } else {
-                            navigate(`/${uid}/friends`);
-                            dispatch(getUserId(uid));
-                          }
-                        }}
-                        className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700 "
-                      >
-                        View friends
-                      </button>
-
-                      {custom_user.uid === uid ? (
-                        <button className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700 ">
-                          View clients
-                        </button>
-                      ) : (
-                        <></>
-                      )}
-                    </>
-                  ) : (
-                    <>
-                      <button
-                        onClick={() => {
-                          if (pathname === "/profile") {
-                            navigate("/profile/friends");
-                            dispatch(getUserId(" "));
-                          } else {
-                            navigate(`/${uid}/friends`);
-                            dispatch(getUserId(uid));
-                          }
-                        }}
-                        className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700 "
-                      >
-                        View friends
-                      </button>
-
-                      {custom_user.uid === uid ? (
-                        <button className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700 ">
-                          Edit profile
-                        </button>
-                      ) : (
-                        <></>
-                      )}
-                    </>
-                  )}
-
-                  {custom_user.uid !== uid &&
-                    (isblocker !== true && isblocked !== true ? (
+                  <div className="flex flex-col space-y-2 items-center justify-center">
+                    {usertype === "Gym" ? (
+                      // if user is not a member of instructor, send memeber ship request
                       <>
-                        {isInstructor === true || viewStatus === true ? (
-                          <></>
+                        {custom_user.uid === uid ? (
+                          <button className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700 ">
+                            Edit profile
+                          </button>
                         ) : (
-                          <>
-                            <button
-                              onClick={() => {
-                                if (userdata?.usertype === "Gym") {
-                                  handleOpenSubscriptionModal();
-                                } else {
-                                  handleFriendRequest();
-                                  // for sending friend request
-                                }
-                              }}
-                              className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700"
-                            >
-                              {displayMessage()}
-                            </button>
-                            <SubscriptionDialogBox
-                              data={userdata}
-                              userdoc={userdoc}
-                              handleRequest={handleRequest}
-                              isOpen={subscriptionModal}
-                              handleClose={handleCloseSubscriptionModal}
-                              Fragment={Fragment}
-                            />
-                          </>
+                          <></>
+                        )}
+                        <button
+                          onClick={() => {
+                            if (pathname === "/profile") {
+                              navigate("/profile/members");
+                              dispatch(getUserId(" "));
+                            } else {
+                              navigate(`/${uid}/members`);
+                              dispatch(getUserId(uid));
+                            }
+                          }}
+                          className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700 "
+                        >
+                          View members
+                        </button>
+
+                        <button
+                          onClick={() => {
+                            if (pathname === "/profile") {
+                              navigate("/profile/instructors");
+                              dispatch(getUserId(" "));
+                            } else {
+                              navigate(`/${uid}/instructors`);
+                              dispatch(getUserId(uid));
+                            }
+                          }}
+                          className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700 "
+                        >
+                          View instructors
+                        </button>
+
+                        <button className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700 ">
+                          View reviews
+                        </button>
+                      </>
+                    ) : usertype === "Instructor" ? (
+                      <>
+                        {custom_user.uid === uid ? (
+                          <button className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700 ">
+                            Edit profile
+                          </button>
+                        ) : (
+                          <></>
+                        )}
+                        <button className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700 ">
+                          View reviews
+                        </button>
+                        <button
+                          onClick={() => {
+                            if (pathname === "/profile") {
+                              navigate("/profile/friends");
+                              dispatch(getUserId(" "));
+                            } else {
+                              navigate(`/${uid}/friends`);
+                              dispatch(getUserId(uid));
+                            }
+                          }}
+                          className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700 "
+                        >
+                          View friends
+                        </button>
+
+                        {custom_user.uid === uid ? (
+                          <button className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700 ">
+                            View clients
+                          </button>
+                        ) : (
+                          <></>
                         )}
                       </>
                     ) : (
-                      <></>
-                    ))}
+                      <>
+                        <button
+                          onClick={() => {
+                            if (pathname === "/profile") {
+                              navigate("/profile/friends");
+                              dispatch(getUserId(" "));
+                            } else {
+                              navigate(`/${uid}/friends`);
+                              dispatch(getUserId(uid));
+                            }
+                          }}
+                          className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700 "
+                        >
+                          View friends
+                        </button>
 
-                  {/* {custom_user.uid !== uid &&
+                        {custom_user.uid === uid ? (
+                          <button className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700 ">
+                            Edit profile
+                          </button>
+                        ) : (
+                          <></>
+                        )}
+                      </>
+                    )}
+
+                    {custom_user.uid !== uid &&
+                      (isblocker !== true && isblocked !== true ? (
+                        <>
+                          {isInstructor === true || viewStatus === true ? (
+                            <></>
+                          ) : userdoc.usertype === "Gym" ? (
+                            <></>
+                          ) : (
+                            <>
+                              <button
+                                // disabled={() => {
+                                //   if (userdata?.usertype === "Gym") {
+                                //     if (userdoc.usertype === "Instructor") {
+                                //       if (userdata?.hiringStatus === "Hiring") {
+                                //         return false;
+                                //       }
+                                //     }
+                                //   }
+                                // }}
+                                // disabled={
+                                //   userdoc.usertype === "Instructor" &&
+                                //   userdata?.hiringStatus !== "Hiring"
+                                // }
+                                disabled={
+                                  handleDisabled()
+                                  // userdata?.hiringStatus === "hiring"
+                                  //   ? true
+                                  //   : false;
+                                }
+                                onClick={() => {
+                                  if (userdata?.usertype === "Gym") {
+                                    handleOpenSubscriptionModal();
+                                  } else {
+                                    handleFriendRequest();
+                                    // for sending friend request
+                                  }
+                                }}
+                                className="disabled:opacity-40 disabled:hover:bg-inherit disabled:hover:text-inherit flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700"
+                              >
+                                {displayMessage()}
+                              </button>
+                            </>
+                          )}
+                        </>
+                      ) : (
+                        <></>
+                      ))}
+
+                    {/* {custom_user.uid !== uid &&
                     !isblocker ? <>
                     <button onClick={handleOpen} className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg text-white bg-red-500 hover:bg-red-600">
                       Block user
@@ -410,13 +407,14 @@ export default function AccountModal({
                     <button onClick={handleOpenUnblockModal} className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg text-white bg-red-500 hover:bg-red-600"> Unblock user</button>
                     <CustomDialogBox Fragment={Fragment} isOpen={unblockModal} handleClose={handleCloseUnblockModal} handleTask={handleUnblock} message={'Are you sure you want to unblock this user?'} />
                   </>} */}
-                  {displayBlockButton()}
-                </div>
-              </Dialog.Panel>
-            </Transition.Child>
+                    {displayBlockButton()}
+                  </div>
+                </Dialog.Panel>
+              </Transition.Child>
+            </div>
           </div>
-        </div>
-      </Dialog>
-    </Transition>
+        </Dialog>
+      </Transition>
+    </>
   );
 }

@@ -46,7 +46,7 @@ function GymScreen({ openSnackbar, closeSnackbar, selectedType }) {
 
     setIsLoading(true);
     const usernameExists = await doesUserNameExist(username);
-    if (usernameExists === false) {
+    if (usernameExists.exist === false) {
       try {
         if (provider_bool === false) {
           await createGym({

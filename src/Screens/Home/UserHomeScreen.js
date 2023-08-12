@@ -17,6 +17,8 @@ import PictureDisplayBox from "./Components/PictureDisplayBox";
 import { getUserDataUid } from "../../Services/firebase";
 import Groups2Icon from "@mui/icons-material/Groups2";
 import CustomCarousel from "./Components/CustomCarousel/CustomCarousel";
+import GymCard from "./GymCard/GymCard";
+import ComponentSkeleton from "../Components/ComponentSkeleton";
 
 const Alert = React.forwardRef(function Alert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
@@ -45,6 +47,19 @@ export default function UserHomeScreen() {
     });
   };
 
+  // user themselves
+  const {
+    status: userStatus,
+    data: userData,
+    refetch,
+  } = useQuery(
+    {
+      queryKey: ["userData"],
+      queryFn: () => getUserDataUid(custom_user.uid),
+    },
+    { enabled: false }
+  );
+
   const pictureDeletMutate = useMutation({
     mutationFn: handleDelete,
     onSuccess: (data) => {
@@ -60,27 +75,22 @@ export default function UserHomeScreen() {
     });
   };
 
-  const {
-    status: userStatus,
-    data: userData,
-    refetch,
-  } = useQuery(
-    {
-      queryKey: ["photoUrls"],
-      queryFn: () => getUserDataUid(custom_user.uid),
-    },
-    { enabled: false }
-  );
-
   const [imageFile, setImageFile] = useState(null);
   const [url, setUrl] = useState(null);
 
   console.log(userdoc);
 
-  const { status, data: routines } = useQuery({
-    queryKey: ["routines", "5"],
-    queryFn: () => getRoutineDocs(custom_user.uid),
-  });
+  const {
+    status,
+    data: routines,
+    refetch: refetch_routine,
+  } = useQuery(
+    {
+      queryKey: ["routines", "5"],
+      queryFn: () => getRoutineDocs(custom_user.uid),
+    },
+    { enabled: false }
+  );
 
   const closeModal = () => {
     setOpenModal(false);
@@ -285,12 +295,28 @@ export default function UserHomeScreen() {
 
         <div className="mt-4">
           <h1 className="font-semibold text-2xl">Gym membership's</h1>
-          <div className="flex justify-center items-center text-gray-500">
-            <Groups2Icon sx={{ fontSize: 70 }} />
-            <span className="ml-4">
-              You have not subscribed to any gym memberships
-            </span>
-          </div>
+          {userStatus === "loading" ? (
+            <div className="w-full max-w-sm">
+              <ComponentSkeleton />
+            </div>
+          ) : (
+            <>
+              {userData?.memberships?.length !== 0 ? (
+                <div>
+                  {userData?.memberships?.map((data, index) => (
+                    <GymCard key={index} refetch={refetch} docId={data} />
+                  ))}
+                </div>
+              ) : (
+                <div className="flex justify-center items-center text-gray-500">
+                  <Groups2Icon sx={{ fontSize: 70 }} />
+                  <span className="ml-4">
+                    You have not subscribed to any gym memberships
+                  </span>
+                </div>
+              )}
+            </>
+          )}
         </div>
 
         <div className="mt-4">

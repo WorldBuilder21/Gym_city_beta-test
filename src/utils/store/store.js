@@ -7,11 +7,12 @@ import userReducer from "./user/userSlice";
 import userdocDataReducer from "./user/userdocDataSlice";
 import postDataReducer from "./post/postDataSlice";
 import getUserIdReducer from "./user/getUserIdSlice";
+import messageReducer from "./inbox/inboxSlice";
 
 const persistConfig = {
   key: "root",
   storage,
-  whitelist: ["user", "userdoc", "routine", "postData", "userId"],
+  whitelist: ["user", "userdoc", "routine", "postData", "userId", "message"],
 };
 
 const userIdPeristedReducer = persistReducer(persistConfig, getUserIdReducer);
@@ -22,6 +23,7 @@ const userdocdataPersistedReducer = persistReducer(
 );
 const routinePersistedReducer = persistReducer(persistConfig, routineReducer);
 const postDataPersistedReducer = persistReducer(persistConfig, postDataReducer);
+const messagePersistedReducer = persistReducer(persistConfig, messageReducer);
 
 const store = configureStore({
   reducer: {
@@ -30,6 +32,7 @@ const store = configureStore({
     routine: routinePersistedReducer,
     postData: postDataPersistedReducer,
     userId: userIdPeristedReducer,
+    message: messagePersistedReducer,
   },
   devTools: process.env.NODE_ENV !== "production",
   middleware: [thunk],

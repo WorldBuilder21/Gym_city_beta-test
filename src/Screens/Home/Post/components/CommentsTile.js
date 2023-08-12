@@ -8,11 +8,14 @@ import { deleteDoc, doc } from "firebase/firestore";
 import { db } from "../../../../firebase";
 
 export default function CommentsTile({ docId, item, uid }) {
-  const { status, data: userData } = useQuery({
-    queryKey: ["commentData"],
-    queryFn: () => getUserDataUid(uid),
-    enabled: docId != null,
-  }, {enabled: false});
+  const { status, data: userData } = useQuery(
+    {
+      queryKey: ["commentData"],
+      queryFn: () => getUserDataUid(uid),
+      enabled: docId != null,
+    },
+    { enabled: false }
+  );
   const custom_user = useSelector((state) => state.user.user);
   const queryClient = useQueryClient();
 
@@ -26,7 +29,7 @@ export default function CommentsTile({ docId, item, uid }) {
   });
 
   const ts = item.ts;
-  const date = new Date(ts.seconds * 1000 + ts.nanoseconds / 1000000);
+  const date = new Date(ts?.seconds * 1000 + ts?.nanoseconds / 1000000);
   const formattedDate = formatDistance(date, new Date());
 
   console.log(uid);

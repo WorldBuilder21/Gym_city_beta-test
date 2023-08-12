@@ -20,10 +20,16 @@ import MuiAlert from "@mui/material/Alert";
 import GoalDialogBox from "./Components/GoalDialogBox";
 import DetailsDialogBox from "./Components/DetailsDialogBox";
 import { deleteGoalDoc } from "../../Services/firebase";
+
 import EditGoalDialogBox from "./Components/EditGoalDialogBox";
 import MenuComponent from "../Home/Components/MenuComponent";
 import { EllipsisVerticalIcon } from "@heroicons/react/20/solid";
 import { Menu } from "@headlessui/react";
+import RecordEntryDialogBox from "./Components/RecordEntryDialogBox";
+import {
+  generateWeekArray,
+  getWeeksInMonth as WeekGenerator,
+} from "../../Services/timeDateutils";
 
 const Alert = React.forwardRef(function Alert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
@@ -44,7 +50,16 @@ export default function WeightTrackerScreen() {
   const [openModal, setOOpenModal] = useState(false);
   const [openDetailsModal, setOpenDetailsModal] = useState(false);
   const [openEditModal, setOpenEditModal] = useState(false);
+  const [openRecordModal, setOpenRecordModal] = useState(false);
   const [openMenu, setOpenMenu] = useState(false);
+
+  const handleOpenRecordModal = () => {
+    setOpenRecordModal(true);
+  };
+
+  const handleCloseRecordModal = () => {
+    setOpenRecordModal(false);
+  };
 
   const handleClose = () => {
     setOpenMenu(false);
@@ -86,40 +101,59 @@ export default function WeightTrackerScreen() {
     setState({ ...state, open: false });
   };
 
-  const handleDelete = () => {
-    console.log("Hello World");
-  };
-
   const handleEdit = () => {
     openEditModalFunc();
   };
 
-  const calculatePercentageValue = () => {
-    const value = (weight_data.previousWeight / weight_data.targetWeight) * 100;
-    const roundedValue = Math.round((value + Number.EPSILON) * 100) / 100;
-    return roundedValue;
+  // const weightData = [
+  //   {
+  //     id: 1,
+  //     weight: 65,
+  //     ts: moment(new Date()).format("MMMM YYYY"),
+  //   },
+  // ];
+
+  const findWeekInMonth = () => {
+    const currentDate = new Date();
+    const currentYear = currentDate.getFullYear();
+    const currentMonth = currentDate.getMonth();
+    const totalWeekInMonth = WeekGenerator(currentYear, currentMonth);
+    const weekArray = generateWeekArray(totalWeekInMonth);
+
+    return weekArray;
   };
 
-  const weightData = [
-    {
-      id: 1,
-      weight: 65,
-      ts: moment(new Date()).format("MMMM YYYY"),
-    },
-  ];
+  // this is what will be fed to the graph
+  const { status: record_status, data: record_data } = useQuery({
+    queryKey: ["records"],
+    queryFn: () =>
+      queryData(
+        custom_user.uid,
+        new Date(pickedDate).getMonth(),
+        new Date(pickedDate).getFullYear()
+      ),
+  });
+
+  console.log("findWeeks:", findWeekInMonth());
 
   const [data, setData] = useState({
     // calculate by the week number, Week 1 , Week 2 etc
-    labels: weightData.map((data) => data.ts),
+    labels: findWeekInMonth().map((data) => data),
 
     datasets: [
       {
-        label: "No Records",
-        backgroundColor: "red",
-        data: [],
+        label:
+          (record_data?.length === 0 || record_status === "loading") === true
+            ? "No Records"
+            : "Weight tracker",
+        backgroundColor: record_data?.length === 0 && "red",
+        data: record_data,
+        borderColor: "black",
       },
     ],
   });
+
+  console.log("record_data", record_data?.length === 0);
 
   const d = new Date();
   const formatted = moment(d).format("MMMM YYYY");
@@ -138,18 +172,20 @@ export default function WeightTrackerScreen() {
     { enabled: false }
   );
 
+  const handleDelete = async () => {
+    console.log("Hello World");
+    await deleteGoalDoc({ uid: custom_user.uid });
+    refetch();
+  };
+
   // delete mutation will be here
 
-  // this is what will be fed to the graph
-  const { status: record_status, data: record_data } = useQuery({
-    queryKey: ["records"],
-    queryFn: () =>
-      queryData(
-        custom_user.uid,
-        new Date(pickedDate).getMonth(),
-        new Date(pickedDate).getFullYear()
-      ),
-  });
+  const ts = weight_data?.lastEntryDate;
+  const date = new Date(ts?.seconds * 1000 + ts?.nanoseconds / 1000000);
+
+  console.log("format:", moment(date).format("LLL"));
+
+  console.log("ts:", date);
 
   // const percentage = 66;
   function getWeeksInMonth(year, month) {
@@ -188,7 +224,21 @@ export default function WeightTrackerScreen() {
       }
     }
 
+    // capping of 100
+    // showing of percentage increase or decrease
+    // testing
+
     return -1; // Day not found in any week
+  }
+
+  function getCurrentWeek(currentDate, startDate, endDate) {
+    const millisecondsPerWeek = 7 * 24 * 60 * 60 * 1000;
+    const totalWeeks = Math.ceil((endDate - startDate) / millisecondsPerWeek);
+    const weeksElapsed = Math.ceil(
+      (currentDate - startDate) / millisecondsPerWeek
+    );
+
+    return `${weeksElapsed} / ${totalWeeks}`;
   }
 
   // Example usage:
@@ -198,7 +248,7 @@ export default function WeightTrackerScreen() {
   const weekNumber = findWeekNumberForDay(year, month, day);
   console.log(`Day ${day} is in Week ${weekNumber}`);
 
-  if (weight_status === "loading") {
+  if (weight_status === "loading" || record_status === "loading") {
     return <div>loading...</div>;
   }
 
@@ -233,6 +283,19 @@ export default function WeightTrackerScreen() {
 
   console.log("date: ", pickedDate);
   console.log("testingYear:", new Date(pickedDate).getFullYear());
+
+  const displayPercentage = () => {
+    const rounded_percent =
+      Math.round((weight_data?.overallPercentage + Number.EPSILON) * 100) / 100;
+
+    if (rounded_percent < 0) {
+      return 0;
+    } else if (rounded_percent > 100) {
+      return 100;
+    } else {
+      return rounded_percent;
+    }
+  };
 
   return (
     <LocalizationProvider dateAdapter={AdapterDayjs}>
@@ -300,7 +363,6 @@ export default function WeightTrackerScreen() {
               <Line
                 data={data}
                 options={{
-                  animation: false,
                   color: "red",
                 }}
               />
@@ -309,22 +371,40 @@ export default function WeightTrackerScreen() {
           <div className="flex flex-col">
             <button
               onClick={() => {
-                if (checkEntryDate()) {
+                // check if Goal is complete
+                if (weight_data?.overallPercentage >= 100) {
+                  refetch();
                   openSnackbar({
-                    message:
-                      "Oops! It seems like you've already submitted your weight for this week. You can only add your weight once every week for this month. Please check back next week to update your progress",
-                    severity: "error",
+                    message: "Congratulations you have reached your goal!!!",
                   });
+                  deleteGoalDoc({ uid: custom_user.uid });
                 } else {
-                  console.log("Hello World");
+                  if (checkEntryDate()) {
+                    openSnackbar({
+                      message:
+                        "Oops! It seems like you've already submitted your weight for this week. You can only add your weight once every week for this month. Please check back next week to update your progress",
+                      severity: "error",
+                    });
+                  } else {
+                    // enter data for goal keeping
+                    console.log("Hello World");
+                    handleOpenRecordModal();
+                  }
                 }
               }}
               className="max-w-sm md:w-auto mt-5 disabled:opacity-25 text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-10 py-2.5 text-center"
             >
               Add weight entry for this week
             </button>
+            <RecordEntryDialogBox
+              refetch={refetch}
+              Fragment={Fragment}
+              handleClose={handleCloseRecordModal}
+              isOpen={openRecordModal}
+              data={weight_data}
+            />
             <span className="text-gray-500 text-sm font-semibold">
-              last entry date: {d.toDateString()} , {d.toLocaleTimeString()}
+              last entry date: {moment(date).format("LLL")}
             </span>
           </div>
           <div className="mt-4">
@@ -360,11 +440,16 @@ export default function WeightTrackerScreen() {
                 </div>
                 <div className="flex justify-center items-center">
                   <span className="flex items-end">
-                    <h1 className="text-8xl">{weight_data.startingWeight}</h1>
+                    <h1 className="text-8xl">
+                      {weight_data?.goalStatus === ""
+                        ? weight_data?.currentWeight
+                        : weight_data?.week1Weight}
+                    </h1>
                     <h5>kg</h5>
                   </span>
                 </div>
               </div>
+
               {weight_data.goalStatus !== "" ? (
                 <>
                   <div className="w-full max-w-sm border p-4 rounded-md shadow-md">
@@ -410,7 +495,11 @@ export default function WeightTrackerScreen() {
                 <div className="mt-2">
                   <div className="max-w-sm border relative p-5 rounded-md shadow-md">
                     <div className="flex justify-between items-center">
-                      <span className="font-semibold text-xl">Weight loss</span>
+                      <span className="font-semibold text-xl">
+                        {weight_data?.goalStatus?.name === "Lossing weight"
+                          ? "Weight loss"
+                          : "Weight Gain"}
+                      </span>
                       <Menu as="div" className="flex md:order-2">
                         <div>
                           <Menu.Button className="inline-flex items-center p-2 text-sm text-gray-500 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200">
@@ -438,31 +527,30 @@ export default function WeightTrackerScreen() {
                         goalStatus={weight_data.goalStatus}
                         currentWeight={weight_data.currentWeight}
                         targetWeight={weight_data.targetWeight}
-                        startingWeight={weightData.startingWeight}
+                        startingWeight={weight_data.startingWeight}
                       />
                     </div>
                     <div className="flex flex-col justify-center items-center mt-4">
                       <div className="w-[50%]">
                         <CircularProgressbar
-                          value={calculatePercentageValue()}
-                          text={`${calculatePercentageValue()}%`}
+                          value={displayPercentage()}
+                          text={`${displayPercentage()}%`}
                         />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-2">
-                  <div className="max-w-sm border p-5 rounded-md shadow-md">
-                    <span className="font-semibold text-xl">Weight loss</span>
-                    <div className="flex flex-col justify-center items-center mt-4">
-                      <div className="w-[50%]">
-                        <CircularProgressbar value={66} text={"66%"} />
                       </div>
                     </div>
                     <div className="flex flex-col items-center justify-center space-y-3">
                       <span className="mt-2 flex justify-center items-center">
-                        Weight lost this week: <p className="ml-2">2kg</p>
+                        {weight_data?.goalStatus?.name === "Lossing weight" ? (
+                          <>
+                            Weight lost this week:
+                            <p className="ml-2">{weight_data?.WeightLoss}kg</p>
+                          </>
+                        ) : (
+                          <>
+                            Weight gained this week
+                            <p className="ml-2">{weight_data?.WeightGain}kg</p>
+                          </>
+                        )}
                       </span>
                       <button
                         type="button"
@@ -477,11 +565,25 @@ export default function WeightTrackerScreen() {
                         isOpen={openDetailsModal}
                         Fragment={Fragment}
                         handleClose={closeDetailsModal}
+                        data={weight_data}
+                        lastEntryDate={moment(date).format("LLL")}
+                        getCurrentWeek={getCurrentWeek}
                       />
                     </div>
-                    <div className="flex items-start justify-end mt-2 text-xl text-green-500 font-semibold">
-                      + 2%
-                    </div>
+                    {weight_data?.currentPercentage !== 0 ? (
+                      <div
+                        className={`flex items-start justify-end mt-2 text-xl font-semibold ${
+                          Math.sign(weight_data?.currentPercentage) === 1
+                            ? "text-green-500"
+                            : "text-rose-500"
+                        }`}
+                      >
+                        {Math.sign(weight_data?.currentPercentage) ? "+" : "-"}{" "}
+                        {weight_data?.currentPercentage}%
+                      </div>
+                    ) : (
+                      <></>
+                    )}
                   </div>
                 </div>
               </div>

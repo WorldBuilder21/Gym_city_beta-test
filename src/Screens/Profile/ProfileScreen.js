@@ -24,7 +24,7 @@ import {
 } from "../../Services/firebase";
 import BlockIcon from "@mui/icons-material/Block";
 import MuiAlert from "@mui/material/Alert";
-import { checkIfRequest } from "../../Services/firebase";
+import { checkIfRequest, sendUserRequest } from "../../Services/firebase";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 
 const Alert = React.forwardRef(function Alert(props, ref) {
@@ -39,6 +39,8 @@ export default function ProfileScreen() {
 
   const custom_user = useSelector((state) => state.user.user);
   const user_doc = useSelector((state) => state.userdoc.userdoc);
+
+  console.log("user_doc:", user_doc);
 
   const [blocked, setBlocked] = useState(false);
   const [blocker, setBlocker] = useState(false);
@@ -137,6 +139,65 @@ export default function ProfileScreen() {
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
+  };
+
+  // send membership and employment request
+  const handleRequest = async () => {
+    if (id !== undefined) {
+      const request_check = await checkIfRequest(id, custom_user.uid);
+      if (request_check === false) {
+        if (userdoc.usertype === "Instructor") {
+          if (isInstructor === true) {
+            openSnackbar({
+              message: "You are already an Instructor in this gym.",
+            });
+          } else {
+            try {
+              sendUserRequest(
+                id,
+                custom_user.uid,
+                "Employment",
+                userdoc?.usertype
+              );
+              openSnackbar({
+                message: "Your employment request has been sent.",
+              });
+            } catch (error) {
+              openSnackbar({
+                message: "An error occurred while sending your requests.",
+                severity: "error",
+              });
+            }
+          }
+        } else {
+          if (viewStatus === true) {
+            openSnackbar({ message: "You are already a member in the gym." });
+          } else {
+            try {
+              sendUserRequest(
+                id,
+                custom_user.uid,
+                "Membership",
+                userdoc?.usertype
+              );
+              openSnackbar({
+                message: "You membership request has been sent.",
+              });
+            } catch (error) {
+              openSnackbar({
+                message: "An error occurred while sending your requests.",
+                severity: "error",
+              });
+            }
+          }
+        }
+      } else {
+        openSnackbar({
+          message: "You have already sent a request.",
+          severity: "error",
+        });
+      }
+    }
   };
 
   // const displayUserBlockedTag = () => {
@@ -278,7 +339,7 @@ export default function ProfileScreen() {
                     Fragment={Fragment}
                     isOpen={isOpen}
                     uid={id ? id : custom_user.uid}
-                    usertype={id ? userdoc.usertype : user_doc.usertype}
+                    usertype={id ? userdoc?.usertype : user_doc.usertype}
                     handleClose={handleClose}
                     viewStatus={viewStatus}
                     isblocked={blocked}
@@ -289,6 +350,7 @@ export default function ProfileScreen() {
                     userdata={userdoc}
                     request={request}
                     isInstructor={isInstructor}
+                    handleRequest={handleRequest}
                   />
                 </>
               </div>
@@ -391,6 +453,7 @@ export default function ProfileScreen() {
                 viewStatus={viewStatus}
                 user_data={userdoc}
                 uid={id ? id : custom_user.uid}
+                handleRequest={handleRequest}
               />
             </TabPanel>
             <TabPanel value={value} index={1}>
@@ -399,6 +462,7 @@ export default function ProfileScreen() {
                 data={userdoc}
                 uid={id ? id : custom_user.uid}
                 openSnackbar={openSnackbar}
+                handleRequest={handleRequest}
               />
             </TabPanel>
           </div>
