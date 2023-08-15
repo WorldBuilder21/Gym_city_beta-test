@@ -32,6 +32,7 @@ import MemberScreen from "./Screens/Member/MemberScreen";
 import ViewInstructorScreen from "./Screens/Instructors/ViewInstructorScreen";
 import PrivacyScreen from "./Screens/Settings/Privacy/PrivacyScreen";
 import ViewBlockedUsers from "./Screens/Home/Blocked/ViewBlockedUsers";
+import ReviewScreen from "./Screens/Home/Reviews/ReviewScreen";
 
 function App() {
   return (
@@ -56,6 +57,7 @@ function App() {
                 <Route path="dashboard" element={<DashboardScreen />} />
               </Route>
             </Route>
+            <Route path="/profile/reviews" element={<ReviewScreen />} />
             <Route
               path="/settings/viewProfile/editProfile"
               element={<EditProfileScreen />}
@@ -96,6 +98,7 @@ function App() {
             <Route path="/:id/members" element={<MemberScreen />} />
             <Route path="/:id/instructors" element={<ViewInstructorScreen />} />
             <Route path="/:id/compose" element={<ComposeScreen />} />
+            <Route path="/:id/reviews" element={<ReviewScreen />} />
 
             <Route path="/home/:id" element={<ViewPostScreen />} />
 

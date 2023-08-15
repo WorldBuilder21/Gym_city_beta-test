@@ -44,11 +44,11 @@ export default function DetailsDialogBox({
   const weightToLoseOrGainWeekly = () => {
     const startTs = data?.startDate;
     const ts = data?.deadline;
-    const date = new Date(ts.seconds * 1000 + ts.nanoseconds / 1000000);
+    const date = new Date(ts?.seconds * 1000 + ts?.nanoseconds / 1000000);
     const deadline = getLastDayOfMonth(date.getFullYear(), date.getMonth());
 
     const startDate = new Date(
-      startTs.seconds * 1000 + startTs.nanoseconds / 1000000
+      startTs?.seconds * 1000 + startTs?.nanoseconds / 1000000
     );
 
     const numberOfWeeksRemaining = getCurrentWeeksRemaining(
@@ -58,7 +58,7 @@ export default function DetailsDialogBox({
     );
 
     const weeksRemaining =
-      numberOfWeeksRemaining.totalWeeks - numberOfWeeksRemaining.weeksElapsed;
+      numberOfWeeksRemaining?.totalWeeks - numberOfWeeksRemaining?.weeksElapsed;
 
     const weightGainOrLose =
       (data?.currentWeight - data?.targetWeight) / weeksRemaining;
@@ -71,12 +71,12 @@ export default function DetailsDialogBox({
     const startTs = data?.startDate;
     const d = new Date();
 
-    const date = new Date(ts.seconds * 1000 + ts.nanoseconds / 1000000);
+    const date = new Date(ts?.seconds * 1000 + ts?.nanoseconds / 1000000);
 
     const deadline = getLastDayOfMonth(date.getFullYear(), date.getMonth());
 
     const startDate = new Date(
-      startTs.seconds * 1000 + startTs.nanoseconds / 1000000
+      startTs?.seconds * 1000 + startTs?.nanoseconds / 1000000
     );
 
     return getCurrentWeek(d, startDate, deadline);
@@ -85,7 +85,7 @@ export default function DetailsDialogBox({
   const getDeadlineDate = () => {
     const ts = data?.deadline;
 
-    const date = new Date(ts.seconds * 1000 + ts.nanoseconds / 1000000);
+    const date = new Date(ts?.seconds * 1000 + ts?.nanoseconds / 1000000);
 
     const deadline = getLastDayOfMonth(date.getFullYear(), date.getMonth());
 

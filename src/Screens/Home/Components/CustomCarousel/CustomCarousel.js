@@ -32,7 +32,7 @@ export default function CustomCarousel(props) {
     <div className="embla w-full md:w-[75%] ">
       <div className="embla__viewport " ref={emblaRef}>
         <div className="embla__container">
-          {data.map((item, index) => (
+          {data?.map((item, index) => (
             <div key={index} className="embla__slide">
               <div className="relaive">
                 <div className="absolute rounded-full bg-slate-100 ml-2 top-2 left-4">

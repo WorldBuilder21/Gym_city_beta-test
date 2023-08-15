@@ -117,7 +117,7 @@ export default function UserHomeScreen() {
   };
 
   const handleChange = (event) => {
-    if (userData.photoUrls.length < 15) {
+    if (userData?.photoUrls?.length < 15) {
       const files = Array.from(event.target.files);
       const [file] = files;
       console.log(file.size);
@@ -199,7 +199,7 @@ export default function UserHomeScreen() {
           </div>
         ) : (
           <>
-            {userData.photoUrls.length === 0 ? (
+            {userData?.photoUrls?.length === 0 ? (
               <div className="flex items-center justify-center w-full">
                 <label
                   htmlFor="dropzone-file"
@@ -278,7 +278,7 @@ export default function UserHomeScreen() {
                 </div>
                 <div className="flex justify-center items-center">
                   <CustomCarousel
-                    data={userData.photoUrls}
+                    data={userData?.photoUrls}
                     options={{ loop: true }}
                     handleTask={handleTask}
                     isOpen={deleteModal}
@@ -356,7 +356,7 @@ export default function UserHomeScreen() {
               </div>
             ) : (
               <div>
-                {routines.empty ? (
+                {routines?.empty ? (
                   <div className="flex text-gray-500 justify-center items-center mt-4 mb-2">
                     <FitnessCenterIcon
                       // className="text-gray-700"
@@ -369,7 +369,7 @@ export default function UserHomeScreen() {
                   </div>
                 ) : (
                   <div>
-                    {routines.docs.map((data, index) => (
+                    {routines?.docs?.map((data, index) => (
                       <WorkoutRoutineCard key={index} data={data.data()} />
                     ))}
                   </div>

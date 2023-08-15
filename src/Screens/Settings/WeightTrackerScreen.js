@@ -1,4 +1,4 @@
-import React, { Fragment, useState } from "react";
+import React, { Fragment, useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { DatePicker } from "@mui/x-date-pickers";
@@ -20,7 +20,7 @@ import MuiAlert from "@mui/material/Alert";
 import GoalDialogBox from "./Components/GoalDialogBox";
 import DetailsDialogBox from "./Components/DetailsDialogBox";
 import { deleteGoalDoc } from "../../Services/firebase";
-
+import AnalyticsIcon from "@mui/icons-material/Analytics";
 import EditGoalDialogBox from "./Components/EditGoalDialogBox";
 import MenuComponent from "../Home/Components/MenuComponent";
 import { EllipsisVerticalIcon } from "@heroicons/react/20/solid";
@@ -29,7 +29,9 @@ import RecordEntryDialogBox from "./Components/RecordEntryDialogBox";
 import {
   generateWeekArray,
   getWeeksInMonth as WeekGenerator,
+  findWeekNumberForDay as test,
 } from "../../Services/timeDateutils";
+import CircularProgress from "@mui/material/CircularProgress";
 
 const Alert = React.forwardRef(function Alert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
@@ -52,6 +54,11 @@ export default function WeightTrackerScreen() {
   const [openEditModal, setOpenEditModal] = useState(false);
   const [openRecordModal, setOpenRecordModal] = useState(false);
   const [openMenu, setOpenMenu] = useState(false);
+
+  const d = new Date();
+  const formatted = moment(d).format("MMMM YYYY");
+
+  const [pickedDate, setPickedDate] = useState(formatted);
 
   const handleOpenRecordModal = () => {
     setOpenRecordModal(true);
@@ -125,7 +132,11 @@ export default function WeightTrackerScreen() {
 
   // this is what will be fed to the graph
   const { status: record_status, data: record_data } = useQuery({
-    queryKey: ["records"],
+    queryKey: [
+      "records",
+      new Date(pickedDate).getMonth(),
+      new Date(pickedDate).getFullYear(),
+    ],
     queryFn: () =>
       queryData(
         custom_user.uid,
@@ -134,31 +145,49 @@ export default function WeightTrackerScreen() {
       ),
   });
 
+  console.log("picked Month:", new Date(pickedDate).getMonth());
+  console.log("picked Year:", new Date(pickedDate).getFullYear());
+
+  console.log("record:", record_data);
+  console.log("length:", record_data?.length);
+
   console.log("findWeeks:", findWeekInMonth());
 
-  const [data, setData] = useState({
-    // calculate by the week number, Week 1 , Week 2 etc
-    labels: findWeekInMonth().map((data) => data),
+  const [data, setData] = useState({});
 
-    datasets: [
-      {
-        label:
-          (record_data?.length === 0 || record_status === "loading") === true
-            ? "No Records"
-            : "Weight tracker",
-        backgroundColor: record_data?.length === 0 && "red",
-        data: record_data,
-        borderColor: "black",
-      },
-    ],
-  });
+  useEffect(() => {
+    if (record_status === "loading") {
+      setData({
+        // calculate by the week number, Week 1 , Week 2 etc
+        labels: findWeekInMonth().map((data) => data),
+
+        datasets: [
+          {
+            label: "No Records",
+            backgroundColor: "red",
+            data: [],
+            borderColor: "black",
+          },
+        ],
+      });
+    } else {
+      setData({
+        // calculate by the week number, Week 1 , Week 2 etc
+        labels: findWeekInMonth().map((data) => data),
+
+        datasets: [
+          {
+            label: record_data?.length === 0 ? "No Records" : "Weight tracker",
+            backgroundColor: record_data?.length === 0 ? "red" : "",
+            data: record_data?.map((data, index) => data?.weight),
+            borderColor: "black",
+          },
+        ],
+      });
+    }
+  }, [record_data, record_status]);
 
   console.log("record_data", record_data?.length === 0);
-
-  const d = new Date();
-  const formatted = moment(d).format("MMMM YYYY");
-
-  const [pickedDate, setPickedDate] = useState(dayjs(formatted));
 
   const {
     status: weight_status,
@@ -177,6 +206,16 @@ export default function WeightTrackerScreen() {
     await deleteGoalDoc({ uid: custom_user.uid });
     refetch();
   };
+
+  if (weight_status === "loading" || record_status === "loading") {
+    return (
+      <div className="flex flex-col justify-center items-center h-screen">
+        <div>
+          <CircularProgress />
+        </div>
+      </div>
+    );
+  }
 
   // delete mutation will be here
 
@@ -242,19 +281,17 @@ export default function WeightTrackerScreen() {
   }
 
   // Example usage:
-  const year = 2023;
-  const month = 6; // 0-indexed, so 6 represents July
-  const day = 23; // Day you want to find the week number for
+  const year = date.getFullYear();
+  const month = date.getMonth(); // 0-indexed, so 6 represents July
+  const day = date.getDate(); // Day you want to find the week number for
   const weekNumber = findWeekNumberForDay(year, month, day);
+  // const week = findWeekNumberForDay(year, month, day);
   console.log(`Day ${day} is in Week ${weekNumber}`);
-
-  if (weight_status === "loading" || record_status === "loading") {
-    return <div>loading...</div>;
-  }
+  console.log("week:", test({ year, month, day }));
 
   const checkEntryDate = () => {
     const ts = weight_data?.lastEntryDate;
-    const date = new Date(ts.seconds * 1000 + ts.nanoseconds / 1000000);
+    const date = new Date(ts?.seconds * 1000 + ts?.nanoseconds / 1000000);
 
     const curr_date = new Date();
 
@@ -350,22 +387,34 @@ export default function WeightTrackerScreen() {
         <div className="m-4">
           <DatePicker
             defaultValue={dayjs(formatted)}
-            value={pickedDate}
+            value={dayjs(pickedDate)}
             onChange={(item) => {
-              console.log(new Date(item));
-              setPickedDate(new Date(item));
+              console.log("dayjs:", dayjs(item));
+              setPickedDate(item);
             }}
             label={'"month and year"'}
             views={["month", "year"]}
           />
           <div className="flex items-center justify-center h-[70%]">
             <div className="mt-2 w-[100%] md:w-[70%]">
-              <Line
+              {record_status === "loading" ? (
+                <div className="">
+                  <AnalyticsIcon />
+                </div>
+              ) : (
+                <Line
+                  data={data}
+                  options={{
+                    color: record_data?.length === 0 ? "red" : "",
+                  }}
+                />
+              )}
+              {/* <Line
                 data={data}
                 options={{
-                  color: "red",
+                  color: record_data?.length === 0 ? "red" : "",
                 }}
-              />
+              /> */}
             </div>
           </div>
           <div className="flex flex-col">
@@ -410,7 +459,7 @@ export default function WeightTrackerScreen() {
           <div className="mt-4">
             <div className="flex items-center">
               <h1 className="font-semibold text-xl">Weight status</h1>
-              {weight_data.goalStatus === "" ? (
+              {weight_data?.goalStatus === "" ? (
                 <>
                   <button
                     onClick={() => {
@@ -424,7 +473,7 @@ export default function WeightTrackerScreen() {
                     Fragment={Fragment}
                     isOpen={openModal}
                     handleClose={closeModal}
-                    startingWeight={weight_data.startingWeight}
+                    startingWeight={weight_data?.startingWeight}
                     refetch={refetch}
                   />
                 </>
@@ -450,7 +499,7 @@ export default function WeightTrackerScreen() {
                 </div>
               </div>
 
-              {weight_data.goalStatus !== "" ? (
+              {weight_data?.goalStatus !== "" ? (
                 <>
                   <div className="w-full max-w-sm border p-4 rounded-md shadow-md">
                     <div className="flex">
@@ -461,7 +510,7 @@ export default function WeightTrackerScreen() {
                     <div className="flex justify-center items-center">
                       <span className="flex items-end">
                         <h1 className="text-8xl">
-                          {weight_data.currentWeight}
+                          {weight_data?.currentWeight}
                         </h1>
                         <h5>kg</h5>
                       </span>
@@ -476,7 +525,7 @@ export default function WeightTrackerScreen() {
                     <div className="flex justify-center items-center">
                       <span className="flex items-end">
                         <h1 className="ml-2 text-8xl">
-                          {weight_data.targetWeight}
+                          {weight_data?.targetWeight}
                         </h1>
                         <h5>kg</h5>
                       </span>
@@ -487,7 +536,7 @@ export default function WeightTrackerScreen() {
                 <div></div>
               )}
             </div>
-            {weight_data.goalStatus !== "" ? (
+            {weight_data?.goalStatus !== "" ? (
               <div>
                 <div className="mt-4 font-semibold text-xl">
                   Progress tracking
@@ -522,12 +571,12 @@ export default function WeightTrackerScreen() {
                         isOpen={openEditModal}
                         Fragment={Fragment}
                         handleClose={closeEditModal}
-                        startDate={weight_data.startDate}
-                        deadline={weight_data.deadline}
-                        goalStatus={weight_data.goalStatus}
-                        currentWeight={weight_data.currentWeight}
-                        targetWeight={weight_data.targetWeight}
-                        startingWeight={weight_data.startingWeight}
+                        startDate={weight_data?.startDate}
+                        deadline={weight_data?.deadline}
+                        goalStatus={weight_data?.goalStatus}
+                        currentWeight={weight_data?.currentWeight}
+                        targetWeight={weight_data?.targetWeight}
+                        startingWeight={weight_data?.startingWeight}
                       />
                     </div>
                     <div className="flex flex-col justify-center items-center mt-4">

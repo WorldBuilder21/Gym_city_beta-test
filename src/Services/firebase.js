@@ -61,11 +61,15 @@ export const createUser = async ({
   return createUserWithEmailAndPassword(auth, email, password).then(
     async (result) => {
       const user = result.user;
-      const ts = serverTimestamp();
-      const date = new Date(ts.seconds * 1000 + ts.nanoseconds / 1000000);
+      const date = new Date();
       const docRef = doc(db, "users", user.uid);
       const weightRef = doc(db, "users", user.uid, "weights", user.uid);
       const recordRef = collection(db, "users", user.uid, "records");
+      const week = findWeekNumberForDay({
+        year: date.getFullYear(),
+        month: date.getMonth(),
+        day: date.getDate(),
+      });
       await setDoc(docRef, {
         docId: user.uid,
         username,
@@ -74,31 +78,29 @@ export const createUser = async ({
         fullname,
         bio,
         dateofbirth,
-        height,
-        weight,
+        height: parseFloat(height),
+        weight: parseFloat(weight),
         photoUrl,
         photoUrls: [],
         memberships: [],
         // Public, Friends only, Private
         postPrivacyStatus: "Private",
         routinePrivacyStatus: "Private",
+        // Friends only, Public, Members in gym, Private
+        inboxPrivacyStatus: "Friends only",
       }).then(async (_) => {
         // goal setting
         // record keeping
         await addDoc(recordRef, {
           ts: serverTimestamp(),
-          weight,
+          weight: parseFloat(weight),
           month: date.getMonth(),
           year: date.getFullYear(),
-          week: findWeekNumberForDay({
-            year: date.getFullYear(),
-            month: date.getMonth(),
-            day: date.getDay(),
-          }),
+          week,
         });
         await setDoc(weightRef, {
           lastEntryDate: serverTimestamp(),
-          currentWeight: parseInt(weight),
+          currentWeight: parseFloat(weight),
           targetWeight: "",
           goalStatus: "",
         });
@@ -123,9 +125,13 @@ export const createUserDoc = async ({
   const docRef = doc(db, "users", uid);
   // this collection will be where lastentrydate, current weight, starting weight, goal status will be stored
   const weightRef = doc(db, "users", uid, "weights", uid);
-  const ts = serverTimestamp();
-  const date = new Date(ts.seconds * 1000 + ts.nanoseconds / 1000000);
+  const date = new Date();
   const recordRef = collection(db, "users", uid, "records");
+  const week = findWeekNumberForDay({
+    year: date.getFullYear(),
+    month: date.getMonth(),
+    day: date.getDate(),
+  });
   // const recordRef = doc(db, "users", uid, "weights", uid, "records");
   await setDoc(docRef, {
     docId: uid,
@@ -135,33 +141,30 @@ export const createUserDoc = async ({
     fullname,
     bio,
     dateofbirth,
-    height,
-    weight,
+    height: parseFloat(height),
+    weight: parseFloat(weight),
     photoUrl,
     photoUrls: [],
     memberships: [],
     // Public, Friends only, Private
     postPrivacyStatus: "Private",
     routinePrivacyStatus: "Private",
+    inboxPrivacyStatus: "Friends only",
   }).then(async (_) => {
     // goal setting
     await setDoc(weightRef, {
       lastEntryDate: serverTimestamp(),
-      currentWeight: parseInt(weight),
+      currentWeight: parseFloat(weight),
       targetWeight: "",
       goalStatus: "",
     });
 
     await addDoc(recordRef, {
       ts: serverTimestamp(),
-      weight,
+      weight: parseFloat(weight),
       month: date.getMonth(),
       year: date.getFullYear(),
-      week: findWeekNumberForDay({
-        year: date.getFullYear(),
-        month: date.getMonth(),
-        day: date.getDay(),
-      }),
+      week,
     });
 
     // await addDoc(recordRef, {
@@ -182,7 +185,7 @@ export const creatGymDoc = async ({
   uid,
 }) => {
   const docRef = doc(db, "users", uid);
-  const memberRef = doc(db, "users", uid, "members", uid);
+
   await setDoc(docRef, {
     //
     docId: uid,
@@ -196,12 +199,8 @@ export const creatGymDoc = async ({
     // Public, Members only,
     postPrivacyStatus: "Members only",
     routinePrivacyStatus: "Members only",
+    inboxPrivacyStatus: "Gym Instructors and Members only",
     hiringStatus: "hiring",
-  });
-  await setDoc(memberRef, {
-    memberId: uid,
-    type: "admin",
-    ts: serverTimestamp(),
   });
 };
 
@@ -219,7 +218,7 @@ export const createGym = async ({
     async (result) => {
       const user = result.user;
       const docRef = doc(db, "users", user.uid);
-      const memberRef = doc(db, "users", user.uid, "members", user.uid);
+      // const memberRef = doc(db, "users", user.uid, "members", user.uid);
       await setDoc(docRef, {
         docId: user.uid,
         username: username,
@@ -232,12 +231,13 @@ export const createGym = async ({
         // Public, Members only,
         postPrivacyStatus: "Members only",
         routinePrivacyStatus: "Members only",
+        inboxPrivacyStatus: "Gym Instructors and Members only",
         hiringStatus: "hiring",
       });
-      await setDoc(memberRef, {
-        docId: user.uid,
-        type: "admin",
-      });
+      // await setDoc(memberRef, {
+      //   docId: user.uid,
+      //   type: "admin",
+      // });
     }
   );
 };
@@ -486,7 +486,7 @@ export const queryData = async (uid, month, year) => {
   const querySnapshot = await getDocs(q);
   return querySnapshot.docs.map((doc) => ({
     id: doc.id,
-    ...doc.data().weight,
+    ...doc.data(),
   }));
 };
 
@@ -504,18 +504,18 @@ export const addRecordEntry = async ({
 }) => {
   const collectionRef = collection(db, "users", uid, "records");
   const weightRef = doc(db, "users", uid, "weights", uid);
-  const ts = serverTimestamp();
-  const date = new Date(ts.seconds * 1000 + ts.nanoseconds / 1000000);
+
+  const date = new Date();
   if (goalStatus === "") {
     await addDoc(collectionRef, {
       ts: serverTimestamp(),
-      weight,
+      weight: parseFloat(weight),
       month: date.getMonth(),
       year: date.getFullYear(),
       week: findWeekNumberForDay({
         year: date.getFullYear(),
         month: date.getMonth(),
-        day: date.getDay(),
+        day: date.getDate(),
       }),
     });
   } else {
@@ -568,11 +568,11 @@ export const addRecordEntry = async ({
     // updating of overall percentage and previous percentage
     await addDoc(collectionRef, {
       ts: serverTimestamp(),
-      weight,
+      weight: parseFloat(weight),
       month: date.getMonth(),
       year: date.getFullYear(),
       week: findWeekNumberForDay({
-        day: date.getDay(),
+        day: date.getDate(),
         month: date.getMonth(),
         year: date.getFullYear(),
       }),
@@ -592,13 +592,13 @@ export const updateGoalDoc = async ({
   const docRef = doc(db, "users", uid, "weights", uid);
   const userRef = doc(db, "users", uid);
   const collectionRef = collection(db, "users", uid, "records");
-  const ts = serverTimestamp();
-  const date = new Date(ts.seconds * 1000 + ts.nanoseconds / 1000000);
+
+  const date = new Date();
   await updateDoc(docRef, {
-    targetWeight: parseInt(targetWeight),
-    currentWeight: parseInt(currentWeight),
+    targetWeight: parseFloat(targetWeight),
+    currentWeight: parseFloat(currentWeight),
     goalStatus,
-    week1Weight: parseInt(currentWeight),
+    week1Weight: parseFloat(currentWeight),
     // used for tracking weight
     lastEntryDate: serverTimestamp(),
 
@@ -617,16 +617,16 @@ export const updateGoalDoc = async ({
   });
 
   await updateDoc(userRef, {
-    weight: parseInt(currentWeight),
+    weight: parseFloat(currentWeight),
   });
 
   await addDoc(collectionRef, {
     ts: serverTimestamp(),
-    weight: parseInt(currentWeight),
+    weight: parseFloat(currentWeight),
     month: date.getMonth(),
     year: date.getFullYear(),
     week: findWeekNumberForDay({
-      day: date.getDay(),
+      day: date.getDate(),
       month: date.getMonth(),
       year: date.getFullYear(),
     }),
@@ -981,6 +981,8 @@ export const acceptRequest = async (uid, docId, requestType) => {
     await updateDoc(userRef, {
       memberships: arrayUnion(uid),
     });
+    const requestRef = doc(db, "users", uid, "requests", docId);
+    await deleteDoc(requestRef);
   } else if (requestType === "Employment") {
     const docRef = doc(db, "users", uid, "instructors", docId);
     const userRef = doc(db, "users", docId);
@@ -992,6 +994,9 @@ export const acceptRequest = async (uid, docId, requestType) => {
     await updateDoc(userRef, {
       memberships: arrayUnion(uid),
     });
+
+    const requestRef = doc(db, "users", uid, "requests", docId);
+    await deleteDoc(requestRef);
   }
 };
 
@@ -1014,6 +1019,13 @@ export const updatePrivacyStatus = async ({
   newStatus,
 }) => {
   const docRef = doc(db, "users", uid);
+  if (type === "Inbox") {
+    if (oldStatus !== newStatus) {
+      await updateDoc(docRef, {
+        inboxPrivacyStatus: newStatus,
+      });
+    }
+  }
   if (type === "Posts") {
     if (oldStatus !== newStatus) {
       await updateDoc(docRef, {

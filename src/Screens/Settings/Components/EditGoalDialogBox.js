@@ -40,7 +40,7 @@ export default function EditGoalDialogBox({
   //   );
 
   const date = new Date(
-    deadline.seconds * 1000 + deadline.nanoseconds / 1000000
+    deadline?.seconds * 1000 + deadline?.nanoseconds / 1000000
   );
   console.log("deadline:", date);
   const formatted_deadline = moment(date).format("MMMM YYYY");
@@ -78,14 +78,14 @@ export default function EditGoalDialogBox({
     setIsLoading(true);
     editGoalMutation.mutate({
       uid,
-      new_currentWeight: new_currentWeight,
-      new_targetWeight: new_target_weight,
+      new_currentWeight: parseFloat(new_currentWeight),
+      new_targetWeight: parseFloat(new_target_weight),
       new_deadline: new_deadline,
       new_goalStatus: selectedType,
       goalStatus,
       deadline,
-      currentWeight,
-      targetWeight,
+      currentWeight: parseFloat(currentWeight),
+      targetWeight: parseFloat(targetWeight),
     });
   };
   return (

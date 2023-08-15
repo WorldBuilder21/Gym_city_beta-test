@@ -13,6 +13,9 @@ import { Snackbar } from "@mui/material";
 import { sendMessage } from "../../Services/InboxFirebase/inbox";
 import MuiAlert from "@mui/material/Alert";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { checkifFriendOrMember } from "../../Services/firebase";
+import { checkIfInstructor } from "../../Services/firebase";
+import { checkIfUserisBlocked } from "../../Services/firebase";
 import { db, storage } from "../../firebase";
 import { useSelector } from "react-redux";
 import {
@@ -48,6 +51,7 @@ export default function ComposeScreen() {
   };
 
   const custom_user = useSelector((state) => state.user.user);
+  const userdoc = useSelector((state) => state.userdoc.userdoc);
 
   const closeSnackbar = () => {
     setState({ ...state, open: false });
@@ -143,92 +147,202 @@ export default function ComposeScreen() {
     setFilesData([...filesData]);
   };
 
+  const sendMessageFunc = async ({
+    recieverData,
+    usernameExists,
+    title,
+    body,
+  }) => {
+    if (pickedFiles.length > 0) {
+      // Check if user is blocked
+      // check the inbox privacy status of this user
+
+      if (checkLimit === true) {
+        setFilelimit(true);
+      } else {
+        setIsLoading(true);
+
+        const collectionRef = collection(db, "inbox");
+
+        const docRef = await addDoc(collectionRef, {
+          title,
+          body,
+          // attachments,
+          senderId: custom_user.uid,
+          recieverId: recieverData[0].docId,
+          ts: serverTimestamp(),
+          users: [custom_user.uid, recieverData[0].docId],
+        });
+
+        // const docRef = await sendMessage({
+        //   title,
+        //   body,
+        //   recieverId: recieverId[0],
+        //   senderId: custom_user.uid,
+        // });
+
+        const uploadTasks = [];
+
+        for (let i = 0; i < pickedFiles.length; i++) {
+          uploadTasks.push(handleUpload(pickedFiles[i], docRef.id));
+        }
+
+        console.log(docRef.id);
+        console.log("uploadTasks:", uploadTasks);
+        console.log("urls:", imageUrls);
+        console.log("array", ["HelloWorld"]);
+        Promise.all(uploadTasks).then(async () => {
+          try {
+            console.log("filesDatalength:", filesData.length);
+            console.log("filesData:", filesData);
+            await updateDoc(docRef, {
+              // attachments: filesData,
+              attachments: filesData,
+            }).then(() => {
+              setIsLoading(false);
+              navigate(-1);
+            });
+          } catch (error) {
+            console.log(error);
+          }
+        });
+      }
+    } else {
+      const recieverId = usernameExists.data.map((data, index) => data.docId);
+      setIsLoading(true);
+
+      const docRef = await sendMessage({
+        title,
+        body,
+        recieverId: recieverId[0],
+        senderId: custom_user.uid,
+      });
+      const inboxRef = doc(db, "inbox", docRef.id);
+      await updateDoc(inboxRef, {
+        attachments: [],
+      });
+      setIsLoading(false);
+      navigate(-1);
+    }
+  };
+
   const onSubmit = async (data, e) => {
     e.preventDefault();
+    setIsLoading(true);
 
     const { title, body, username } = getValues();
-
-    setIsLoading(true);
     const usernameExists = await doesUserNameExist(username);
 
     if (usernameExists.exist === true) {
-      const recieverId = usernameExists.data.map((data, index) => data.docId);
+      const recieverData = usernameExists.data.map((data, index) => data);
 
-      if (recieverId[0] === custom_user.uid) {
+      if (recieverData[0].docId === custom_user.uid) {
         setOpenError({
           message: "You cannot send a message to yourself.",
           status: true,
         });
         setIsLoading(false);
       } else {
-        if (pickedFiles.length > 0) {
-          if (checkLimit === true) {
-            setFilelimit(true);
-          } else {
-            setIsLoading(true);
-
-            const collectionRef = collection(db, "inbox");
-
-            const docRef = await addDoc(collectionRef, {
-              title,
-              body,
-              // attachments,
-              senderId: custom_user.uid,
-              ts: serverTimestamp(),
-              users: [custom_user.uid, recieverId[0]],
-            });
-
-            // const docRef = await sendMessage({
-            //   title,
-            //   body,
-            //   recieverId: recieverId[0],
-            //   senderId: custom_user.uid,
-            // });
-
-            const uploadTasks = [];
-
-            for (let i = 0; i < pickedFiles.length; i++) {
-              uploadTasks.push(handleUpload(pickedFiles[i], docRef.id));
-            }
-
-            console.log(docRef.id);
-            console.log("uploadTasks:", uploadTasks);
-            console.log("urls:", imageUrls);
-            console.log("array", ["HelloWorld"]);
-            Promise.all(uploadTasks).then(async () => {
-              try {
-                console.log("filesDatalength:", filesData.length);
-                console.log("filesData:", filesData);
-                await updateDoc(docRef, {
-                  // attachments: filesData,
-                  attachments: filesData,
-                }).then(() => {
-                  setIsLoading(false);
-                  navigate(-1);
-                });
-              } catch (error) {
-                console.log(error);
-              }
-            });
-          }
-        } else {
-          const recieverId = usernameExists.data.map(
-            (data, index) => data.docId
-          );
-          setIsLoading(true);
-
-          const docRef = await sendMessage({
-            title,
-            body,
-            recieverId: recieverId[0],
-            senderId: custom_user.uid,
-          });
-          const inboxRef = doc(db, "inbox", docRef.id);
-          await updateDoc(inboxRef, {
-            attachments: [],
+        const blocked = await checkIfUserisBlocked(
+          recieverData[0].docId,
+          custom_user.uid
+        );
+        if (blocked) {
+          setOpenError({
+            status: true,
+            message:
+              "You cannot send a message to this user because you are on this user's blocked list.",
           });
           setIsLoading(false);
-          navigate(-1);
+        }
+        if (
+          recieverData[0].inboxPrivacyStatus === "Friends only" ||
+          recieverData[0].inboxPrivacyStatus ===
+            "Gym Instructors and Members only"
+        ) {
+          if (recieverData[0].usertype === "Gym") {
+            if (userdoc.usertype === "Instructor") {
+              const isInstructor = await checkIfInstructor(
+                recieverData[0].docId,
+                custom_user.uid
+              );
+              if (isInstructor) {
+                // then send message
+                await sendMessageFunc({
+                  title,
+                  body,
+                  recieverData,
+                  usernameExists,
+                });
+              } else {
+                setOpenError({
+                  status: true,
+                  message:
+                    "Only employed gym instructors of this can send messages to this user",
+                });
+                setIsLoading(false);
+              }
+            } else {
+              // if user is "User", they have to be a member to send a message.
+              const isMember = await checkifFriendOrMember(
+                recieverData[0].docId,
+                custom_user.uid,
+                "Gym"
+              );
+              if (isMember) {
+                // then send message
+                await sendMessageFunc({
+                  title,
+                  body,
+                  recieverData,
+                  usernameExists,
+                });
+              } else {
+                setOpenError({
+                  status: true,
+                  message:
+                    "Only members of this gym can send messages to this user",
+                });
+                setIsLoading(false);
+              }
+            }
+          } else {
+            const isFriend = await checkifFriendOrMember(
+              recieverData[0].docId,
+              custom_user.uid,
+              "User"
+            );
+            if (isFriend) {
+              // then send message
+              await sendMessageFunc({
+                title,
+                body,
+                recieverData,
+                usernameExists,
+              });
+            } else {
+              setOpenError({
+                status: true,
+                message:
+                  "Message inbox accessible only to users on their friends list.",
+              });
+              setIsLoading(false);
+            }
+          }
+        } else if (recieverData[0].inboxPrivacyStatus === "Private") {
+          setOpenError({
+            status: true,
+            message: "This users inbox is privated.",
+          });
+          setIsLoading(false);
+        } else if (recieverData[0].inboxPrivacyStatus === "Public") {
+          // then send message
+          await sendMessageFunc({
+            title,
+            body,
+            recieverData,
+            usernameExists,
+          });
         }
       }
     } else {

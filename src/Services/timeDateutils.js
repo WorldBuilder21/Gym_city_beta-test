@@ -41,8 +41,33 @@ export function TotalNumberofWeekInMonth(year, month) {
   return weeks;
 }
 
+function WeekGenerator(year, month) {
+  const weeks = [];
+  const firstDayOfMonth = new Date(year, month, 1);
+  const lastDayOfMonth = new Date(year, month + 1, 0);
+
+  let currentWeek = [];
+  let currentDate = new Date(firstDayOfMonth);
+
+  while (currentDate <= lastDayOfMonth) {
+    currentWeek.push(new Date(currentDate));
+    currentDate.setDate(currentDate.getDate() + 1);
+
+    // Check if the current day is a Sunday (end of the week) or the last day of the month
+    if (
+      currentDate.getDay() === 0 ||
+      currentDate.getTime() === lastDayOfMonth.getTime()
+    ) {
+      weeks.push(currentWeek);
+      currentWeek = [];
+    }
+  }
+
+  return weeks;
+}
+
 export function findWeekNumberForDay({ year, month, day }) {
-  const weeks = getWeeksInMonth(year, month);
+  const weeks = WeekGenerator(year, month);
 
   for (let i = 0; i < weeks.length; i++) {
     for (let j = 0; j < weeks[i].length; j++) {

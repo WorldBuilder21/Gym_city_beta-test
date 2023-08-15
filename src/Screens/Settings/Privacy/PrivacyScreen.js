@@ -8,6 +8,7 @@ import MuiAlert from "@mui/material/Alert";
 import { getUserDataUid } from "../../../Services/firebase";
 import { useQuery } from "@tanstack/react-query";
 import ErrorMessage from "../../Components/ErrorMessage";
+import InboxPrivacyDIalogBox from "./Components/InboxPrivacyDIalogBox";
 
 // instructors | users
 // Public, Friends only, private
@@ -23,7 +24,8 @@ export default function PrivacyScreen() {
   const navigate = useNavigate();
   const [openPostModal, setOpenPostModal] = useState(false);
   const [openRoutineModal, setOpenRoutineModal] = useState(false);
-  const [openInstructorModal, setOpenInstructorModal] = useState(false)
+  const [openInstructorModal, setOpenInstructorModal] = useState(false);
+  const [openInboxModal, setOpenInboxModal] = useState(false);
   const [state, setState] = useState({
     open: false,
     vertical: "top",
@@ -34,7 +36,7 @@ export default function PrivacyScreen() {
   const { vertical, horizontal, open, message, severity } = state;
 
   const custom_user = useSelector((state) => state.user.user);
-  const userdoc = useSelector((state) => state.userdoc.userdoc)
+  const userdoc = useSelector((state) => state.userdoc.userdoc);
 
   const { status, data, refetch } = useQuery(
     {
@@ -52,13 +54,21 @@ export default function PrivacyScreen() {
     setState({ ...state, open: false });
   };
 
+  const handleOpenInboxModal = () => {
+    setOpenInboxModal(true);
+  };
+
+  const handleCloseInboxModal = () => {
+    setOpenInboxModal(false);
+  };
+
   const handleOpenInstructorModal = () => {
-    setOpenInstructorModal(true)
-  }
+    setOpenInstructorModal(true);
+  };
 
   const handleCloseInstructorModal = () => {
-    setOpenInstructorModal(false)
-  }
+    setOpenInstructorModal(false);
+  };
 
   const handleOpenRoutineModal = () => {
     setOpenRoutineModal(true);
@@ -193,24 +203,62 @@ export default function PrivacyScreen() {
                 />
               </div>
             </div>
-            {userdoc.usertype === 'Gym' &&
-            <div>
-              <span className="font-semibold text-md">Hiring status:</span>
+            {userdoc.usertype === "Gym" && (
+              <div>
+                <span className="font-semibold text-md">Hiring status:</span>
+                <div className="mt-2 space-y-3">
+                  <button
+                    onClick={handleOpenInstructorModal}
+                    className="flex w-full hover:bg-gray-100 border border-gray-300 p-4 rounded-lg shadow-md items-center justify-between"
+                  >
+                    <div className="items-center justify-center flex">
+                      <span className="font-semibold ml-4">
+                        {
+                          // not hiring, hiring
+                          data?.hiringStatus
+                        }
+                      </span>
+                    </div>
+                    <ArrowForwardIcon />
+                  </button>
+                  <PrivacyDialogBox
+                    Fragment={Fragment}
+                    type={"Employment"}
+                    isOpen={openInstructorModal}
+                    handleClose={handleCloseInstructorModal}
+                    openSnackbar={openSnackbar}
+                    refetch={refetch}
+                    oldStatus={data.hiringStatus}
+                  />
+                </div>
+              </div>
+            )}
+
+            <div className="mb-10">
+              <span className="font-semibold text-md">Inbox privacy:</span>
               <div className="mt-2 space-y-3">
-                <button onClick={handleOpenInstructorModal}  className="flex w-full hover:bg-gray-100 border border-gray-300 p-4 rounded-lg shadow-md items-center justify-between">
+                <button
+                  onClick={handleOpenPostModal}
+                  className="flex w-full hover:bg-gray-100 border border-gray-300 p-4 rounded-lg shadow-md items-center justify-between"
+                >
                   <div className="items-center justify-center flex">
                     <span className="font-semibold ml-4">
-                    {
-                  // not hiring, hiring
-                  data?.hiringStatus
-                }
+                      {data?.inboxPrivacyStatus}
                     </span>
                   </div>
                   <ArrowForwardIcon />
-                  </button>
-                  <PrivacyDialogBox Fragment={Fragment} type={'Employment'} isOpen={openInstructorModal} handleClose={handleCloseInstructorModal} openSnackbar={openSnackbar} refetch={refetch} oldStatus={data.hiringStatus} />
+                </button>
+                {/* <PrivacyDialogBox
+                  Fragment={Fragment}
+                  type={"Posts"}
+                  isOpen={openPostModal}
+                  handleClose={handleClosePostModal}
+                  oldStatus={data.postPrivacyStatus}
+                  openSnackbar={openSnackbar}
+                  refetch={refetch}
+                /> */}
               </div>
-            </div>}
+            </div>
           </div>
         </div>
       )}

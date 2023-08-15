@@ -35,10 +35,11 @@ export default function EditProfileScreen() {
   const user_doc = useSelector((state) => state.userdoc.userdoc);
   const custom_user = useSelector((state) => state.user.user);
   const [date, setDate] = useState(
-    new Date(
-      user_doc.dateofbirth.seconds * 1000 +
-        user_doc.dateofbirth.nanoseconds / 1000000
-    )
+    user_doc.usertype !== "Gym" &&
+      new Date(
+        user_doc.dateofbirth.seconds * 1000 +
+          user_doc.dateofbirth.nanoseconds / 1000000
+      )
   );
   const [isLoading, setIsLoading] = useState(false);
   const imageRef = useRef();
@@ -81,32 +82,59 @@ export default function EditProfileScreen() {
     }
   };
 
+  console.log(custom_user);
+
   const onSubmit = async (data, e) => {
     e.preventDefault();
     setIsLoading(true);
-    const { fullname, username, bio, dateofbirth, height, weight } =
-      getValues();
+    const {
+      fullname,
+      username,
+      bio,
+      dateofbirth,
+      height,
+      weight,
+      gymname,
+      ownername,
+    } = getValues();
     const usernameExists = await doesUserNameExist(user_doc.username);
-    if (usernameExists === false) {
-      try {
-        const docRef = doc(db, "users", user_doc.uid);
-        if (imageFile !== null) {
-          let fileRef = ref(storage, user_doc.uid);
-          deleteObject(fileRef);
-          const storageRef = ref(
-            storage,
-            `/userprofilepic/${Date.now()}${imageFile.name}`
-          );
-          const uploadImage = uploadBytes(storageRef, imageFile);
-          uploadImage.then((snapshot) => {
-            getDownloadURL(snapshot.ref).then(async (url) => {
-              const docRef = doc(db, "users", user_doc.uid);
-              await updateDoc(docRef, {
-                photUrl: url,
-              });
+
+    try {
+      const docRef = doc(db, "users", custom_user.uid);
+      if (imageFile !== null) {
+        let fileRef = ref(storage, custom_user.uid);
+        deleteObject(fileRef);
+        const storageRef = ref(
+          storage,
+          `/userprofilepic/${Date.now()}${imageFile.name}`
+        );
+        const uploadImage = uploadBytes(storageRef, imageFile);
+        uploadImage.then((snapshot) => {
+          getDownloadURL(snapshot.ref).then(async (url) => {
+            const docRef = doc(db, "users", custom_user.uid);
+            await updateDoc(docRef, {
+              photUrl: url,
             });
           });
+        });
+      }
+
+      if (user_doc.usertype === "Gym") {
+        if (gymname !== user_doc.gymname) {
+          await updateDoc(docRef, {
+            gymname: fullname,
+          });
+          updateProfile(auth.currentUser, {
+            displayName: gymname,
+          });
         }
+
+        if (ownername !== user_doc.ownername) {
+          await updateDoc(docRef, {
+            ownername: ownername,
+          });
+        }
+      } else {
         if (fullname !== user_doc.fullname) {
           await updateDoc(docRef, {
             fullname: fullname,
@@ -115,16 +143,24 @@ export default function EditProfileScreen() {
             displayName: fullname,
           });
         }
-        if (username !== user_doc.username) {
+      }
+
+      if (username !== user_doc.username) {
+        if (usernameExists.exist) {
+          setOpenError(true);
+        } else {
           await updateDoc(docRef, {
             username: username,
           });
         }
-        if (bio !== user_doc.bio) {
-          await updateDoc(docRef, {
-            bio: bio,
-          });
-        }
+      }
+      if (bio !== user_doc.bio) {
+        await updateDoc(docRef, {
+          bio: bio,
+        });
+      }
+
+      if (user_doc.usertype !== "Gym") {
         if (dateofbirth !== user_doc.dateofbirth) {
           await updateDoc(docRef, {
             dateofbirth: dateofbirth,
@@ -140,22 +176,22 @@ export default function EditProfileScreen() {
             weight: weight,
           });
         }
-        const newData = await getUserDataUid(custom_user.uid);
-        dispatch(getUserDocData(newData));
-        console.log(user_doc);
-        navigate(-1);
-        setEditProfileFile(null);
-        setImageFile(null);
-        setIsLoading(false);
-      } catch (error) {
-        openSnackbar({
-          message: "An error has occured, please try again later.",
-          severity: "error",
-        });
-        console.log(error);
       }
-    } else {
-      setOpenError(true);
+
+      const newData = await getUserDataUid(custom_user.uid);
+      dispatch(getUserDocData(newData));
+      console.log(user_doc);
+      navigate(-1);
+      setEditProfileFile(null);
+      setImageFile(null);
+      setIsLoading(false);
+    } catch (error) {
+      setIsLoading(false);
+      openSnackbar({
+        message: "An error has occured, please try again later.",
+        severity: "error",
+      });
+      console.log(error);
     }
   };
 
@@ -238,34 +274,84 @@ export default function EditProfileScreen() {
           </label>
           <div className="w-full max-w-sm px-2 md:max-w-md flex flex-col">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-              <Controller
-                name="fullname"
-                defaultValue={user_doc.fullname}
-                control={control}
-                rules={{
-                  required: "This field is required",
-                  pattern: {
-                    value:
-                      /^[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð ,.'-]+$/u,
-                    message: "Invalid full name",
-                  },
-                }}
-                render={({
-                  field: { onChange, value },
-                  fieldState: { error },
-                }) => (
-                  <>
-                    <TextField
-                      className="w-full"
-                      value={value}
-                      onChange={onChange}
-                      label="Full name"
-                      error={!!error}
-                      helperText={error ? error.message : null}
-                    />
-                  </>
-                )}
-              />
+              {user_doc.usertype === "Gym" ? (
+                <>
+                  <Controller
+                    name="gymname"
+                    defaultValue={user_doc.gymname}
+                    control={control}
+                    rules={{ required: "This field is required" }}
+                    render={({
+                      field: { onChange, value },
+                      fieldState: { error },
+                    }) => (
+                      <TextField
+                        label="Gym's name"
+                        className="w-full"
+                        value={value}
+                        onChange={onChange}
+                        error={!!error}
+                        helperText={error ? error.message : null}
+                      />
+                    )}
+                  />
+                  <Controller
+                    name="ownername"
+                    defaultValue={user_doc.ownername}
+                    control={control}
+                    rules={{
+                      required: "This field is required ",
+                      pattern: {
+                        value:
+                          /^[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð ,.'-]+$/u,
+                        message: "Invalid first name",
+                      },
+                    }}
+                    render={({
+                      field: { onChange, value },
+                      fieldState: { error },
+                    }) => (
+                      <TextField
+                        className="w-full"
+                        label="Owner's name"
+                        value={value}
+                        onChange={onChange}
+                        error={!!error}
+                        helperText={error ? error.message : null}
+                      />
+                    )}
+                  />
+                </>
+              ) : (
+                <Controller
+                  name="fullname"
+                  defaultValue={user_doc.fullname}
+                  control={control}
+                  rules={{
+                    required: "This field is required",
+                    pattern: {
+                      value:
+                        /^[a-zA-ZàáâäãåąčćęèéêëėįìíîïłńòóôöõøùúûüųūÿýżźñçčšžÀÁÂÄÃÅĄĆČĖĘÈÉÊËÌÍÎÏĮŁŃÒÓÔÖÕØÙÚÛÜŲŪŸÝŻŹÑßÇŒÆČŠŽ∂ð ,.'-]+$/u,
+                      message: "Invalid full name",
+                    },
+                  }}
+                  render={({
+                    field: { onChange, value },
+                    fieldState: { error },
+                  }) => (
+                    <>
+                      <TextField
+                        className="w-full"
+                        value={value}
+                        onChange={onChange}
+                        label="Full name"
+                        error={!!error}
+                        helperText={error ? error.message : null}
+                      />
+                    </>
+                  )}
+                />
+              )}
               <div>
                 <Controller
                   name="username"
@@ -347,96 +433,102 @@ export default function EditProfileScreen() {
                 />
               </div>
 
-              <Controller
-                control={control}
-                name="dateofbirth"
-                defaultValue={date}
-                rules={{
-                  required: "This field is empty",
-                }}
-                render={({
-                  field: { onChange, value },
-                  fieldState: { error },
-                }) => (
-                  <DatePicker
-                    label="Date of birth"
-                    value={value}
-                    onChange={onChange}
-                    className="w-full"
-                    renderInput={(props) => (
-                      <TextField
-                        helperText={error ? error.message : null}
-                        {...props}
-                        error={!!error}
+              {user_doc.usertype === "Gym" ? (
+                <></>
+              ) : (
+                <>
+                  <Controller
+                    control={control}
+                    name="dateofbirth"
+                    defaultValue={date}
+                    rules={{
+                      required: "This field is empty",
+                    }}
+                    render={({
+                      field: { onChange, value },
+                      fieldState: { error },
+                    }) => (
+                      <DatePicker
+                        label="Date of birth"
+                        value={value}
+                        onChange={onChange}
+                        className="w-full"
+                        renderInput={(props) => (
+                          <TextField
+                            helperText={error ? error.message : null}
+                            {...props}
+                            error={!!error}
+                          />
+                        )}
                       />
                     )}
                   />
-                )}
-              />
-              <Controller
-                name="height"
-                defaultValue={user_doc.height}
-                control={control}
-                rules={{
-                  required: "This field is empty.",
-                  pattern: {
-                    value:
-                      /^([0-9]*[1-9][0-9]*(\.[0-9]+)?|[0]+\.[0-9]*[1-9][0-9]*)$/,
-                    message: "Invalid height",
-                  },
-                }}
-                render={({
-                  field: { onChange, value },
-                  fieldState: { error },
-                }) => (
-                  <TextField
-                    label="height"
-                    className="w-full"
-                    value={value}
-                    type="number"
-                    error={!!error}
-                    helperText={error ? error.message : null}
-                    onChange={onChange}
-                    InputProps={{
-                      endAdornment: (
-                        <InputAdornment position="end">cm</InputAdornment>
-                      ),
+                  <Controller
+                    name="height"
+                    defaultValue={user_doc.height}
+                    control={control}
+                    rules={{
+                      required: "This field is empty.",
+                      pattern: {
+                        value:
+                          /^([0-9]*[1-9][0-9]*(\.[0-9]+)?|[0]+\.[0-9]*[1-9][0-9]*)$/,
+                        message: "Invalid height",
+                      },
                     }}
+                    render={({
+                      field: { onChange, value },
+                      fieldState: { error },
+                    }) => (
+                      <TextField
+                        label="height"
+                        className="w-full"
+                        value={value}
+                        type="number"
+                        error={!!error}
+                        helperText={error ? error.message : null}
+                        onChange={onChange}
+                        InputProps={{
+                          endAdornment: (
+                            <InputAdornment position="end">cm</InputAdornment>
+                          ),
+                        }}
+                      />
+                    )}
                   />
-                )}
-              />
-              <Controller
-                name="weight"
-                defaultValue={user_doc.weight}
-                control={control}
-                rules={{
-                  required: "This field is empty.",
-                  pattern: {
-                    value:
-                      /^([0-9]*[1-9][0-9]*(\.[0-9]+)?|[0]+\.[0-9]*[1-9][0-9]*)$/,
-                    message: "Invalid weight",
-                  },
-                }}
-                render={({
-                  field: { onChange, value },
-                  fieldState: { error },
-                }) => (
-                  <TextField
-                    label="Weight"
-                    className="w-full"
-                    type="number"
-                    value={value}
-                    error={!!error}
-                    helperText={error ? error.message : null}
-                    onChange={onChange}
-                    InputProps={{
-                      endAdornment: (
-                        <InputAdornment position="end">kg</InputAdornment>
-                      ),
+                  <Controller
+                    name="weight"
+                    defaultValue={user_doc.weight}
+                    control={control}
+                    rules={{
+                      required: "This field is empty.",
+                      pattern: {
+                        value:
+                          /^([0-9]*[1-9][0-9]*(\.[0-9]+)?|[0]+\.[0-9]*[1-9][0-9]*)$/,
+                        message: "Invalid weight",
+                      },
                     }}
+                    render={({
+                      field: { onChange, value },
+                      fieldState: { error },
+                    }) => (
+                      <TextField
+                        label="Weight"
+                        className="w-full"
+                        type="number"
+                        value={value}
+                        error={!!error}
+                        helperText={error ? error.message : null}
+                        onChange={onChange}
+                        InputProps={{
+                          endAdornment: (
+                            <InputAdornment position="end">kg</InputAdornment>
+                          ),
+                        }}
+                      />
+                    )}
                   />
-                )}
-              />
+                </>
+              )}
               <button
                 disabled={isLoading}
                 type="submit"

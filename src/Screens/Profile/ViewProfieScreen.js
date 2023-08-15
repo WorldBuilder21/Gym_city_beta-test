@@ -57,7 +57,9 @@ export default function ViewProfieScreen() {
             <div className="flex flex-col ml-6 justify-center space-y-2">
               <div>
                 <p className="font-semibold text-xl truncate">
-                  {userdoc.fullname}
+                  {userdoc.usertype === "Gym"
+                    ? userdoc.gymname
+                    : userdoc.fullname}
                 </p>
                 <p className="text-blue-600 font-semibold truncate">
                   @{userdoc.username}
@@ -65,83 +67,93 @@ export default function ViewProfieScreen() {
               </div>
             </div>
           </div>
-          <div className="flex mt-2 flex-row space-x-4">
-            <div className="flex font-semibold flex-row items-center">
-              Client rating: 0
-              <StarIcon sx={{ color: yellow[800], fontSize: 30 }} />
+          {userdoc.usertype === "Gym" ? (
+            <div className="flex mt-2 flex-row">
+              <div className="flex font-semibold flex-row items-center">
+                Rating: 0
+                <StarIcon sx={{ color: yellow[800], fontSize: 30 }} />
+              </div>
             </div>
-            <div className="flex font-semibold flex-row items-center">
-              Employer rating: 0
-              <StarIcon sx={{ color: yellow[800], fontSize: 30 }} />
+          ) : userdoc.usertype === "Instructor" ? (
+            <div className="flex mt-2 flex-row space-x-4">
+              <div className="flex font-semibold flex-row items-center">
+                Client rating: 0
+                <StarIcon sx={{ color: yellow[800], fontSize: 30 }} />
+              </div>
+              <div className="flex font-semibold flex-row items-center">
+                Employer rating: 0
+                <StarIcon sx={{ color: yellow[800], fontSize: 30 }} />
+              </div>
             </div>
-          </div>
+          ) : (
+            <></>
+          )}
           <p className="mt-2">{userdoc.bio}</p>
-          <div className="mt-2 justify-between flex">
-            <div className="flex items-center">
-              <p className="text-md md:text-lg">Weight:</p>
-              <p className="ml-1 md:ml-2 font-semibold text-lg md:text-xl">
-                {userdoc.weight}kg
-              </p>
-            </div>
-            <div className="flex items-center">
-              <p className="text-md md:text-lg">Height:</p>
-              <p className="ml-1 md:ml-2 font-semibold text-lg md:text-xl">
-                {userdoc.height}cm
-              </p>
-            </div>
-            <div className="flex items-center">
-              <p className="text-md md:text-lg">BMI:</p>
-              <div className="infline-flex items-center justify-center">
-                <p
-                  className={`ml-1 md:ml-2 font-semibold text-lg md:text-xl ${bmiTextStatus(
-                    userdoc.height,
-                    userdoc.weight
-                  )}`}
-                >
-                  {bmiCalaculator(userdoc.height, userdoc.weight)}
-                  kg/m<sup>2</sup>
+          {userdoc.usertype !== "Gym" && (
+            <div className="mt-2 justify-between flex">
+              <div className="flex items-center">
+                <p className="text-md md:text-lg">Weight:</p>
+                <p className="ml-1 md:ml-2 font-semibold text-lg md:text-xl">
+                  {userdoc.weight}kg
                 </p>
               </div>
-            </div>
-          </div>
-
-          <div className="flex flex-col md:flex-row justify-center items-start mt-5 md:mt-0 md:justify-between md:items-end">
-            <div className="flex items-end md:items-center">
-              <p className="text-md md:text-lg">BMI status: </p>
-              <div
-                className={`${bmiBorderColor(
-                  userdoc.height,
-                  userdoc.weight
-                )} ml-2 font-medium text-md px-2.5 py-0.5 rounded border`}
-              >
-                {bmiBorderStatus(userdoc.height, userdoc.weight)}
+              <div className="flex items-center">
+                <p className="text-md md:text-lg">Height:</p>
+                <p className="ml-1 md:ml-2 font-semibold text-lg md:text-xl">
+                  {userdoc.height}cm
+                </p>
+              </div>
+              <div className="flex items-center">
+                <p className="text-md md:text-lg">BMI:</p>
+                <div className="infline-flex items-center justify-center">
+                  <p
+                    className={`ml-1 md:ml-2 font-semibold text-lg md:text-xl ${bmiTextStatus(
+                      userdoc.height,
+                      userdoc.weight
+                    )}`}
+                  >
+                    {bmiCalaculator(userdoc.height, userdoc.weight)}
+                    kg/m<sup>2</sup>
+                  </p>
+                </div>
               </div>
             </div>
-            <button className="w-full md:w-auto mt-5 disabled:opacity-25 text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-10 py-2.5 text-center">
-              View workouts
-            </button>
-          </div>
+          )}
+
+          {userdoc.usertype !== "Gym" && (
+            <div className="flex flex-col md:flex-row justify-center items-start mt-5 md:mt-0 md:justify-between md:items-end">
+              <div className="flex items-end md:items-center">
+                <p className="text-md md:text-lg">BMI status: </p>
+                <div
+                  className={`${bmiBorderColor(
+                    userdoc.height,
+                    userdoc.weight
+                  )} ml-2 font-medium text-md px-2.5 py-0.5 rounded border`}
+                >
+                  {bmiBorderStatus(userdoc.height, userdoc.weight)}
+                </div>
+              </div>
+              <button className="w-full md:w-auto mt-5 disabled:opacity-25 text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-10 py-2.5 text-center">
+                View workouts
+              </button>
+            </div>
+          )}
 
           <div className="mt-4 space-y-3">
-            <button className="flex w-full hover:bg-gray-100 border border-gray-300 p-4 rounded-lg shadow-md items-center justify-between">
-              <div className="items-center justify-center flex">
-                <AnalyticsIcon />
-                <span className="font-semibold ml-4">Track your BMI</span>
-              </div>
-              <ArrowForwardIcon />
-            </button>
-            <button
-              onClick={() => {
-                navigate("/settings/viewProfile/weightTracker");
-              }}
-              className="flex w-full hover:bg-gray-100 border border-gray-300 p-4 rounded-lg shadow-md items-center justify-between"
-            >
-              <div className="items-center justify-center flex">
-                <AnalyticsIcon />
-                <span className="font-semibold ml-4">Track your weight</span>
-              </div>
-              <ArrowForwardIcon />
-            </button>
+            {userdoc.usertype !== "Gym" && (
+              <button
+                onClick={() => {
+                  navigate("/settings/viewProfile/weightTracker");
+                }}
+                className="flex w-full hover:bg-gray-100 border border-gray-300 p-4 rounded-lg shadow-md items-center justify-between"
+              >
+                <div className="items-center justify-center flex">
+                  <AnalyticsIcon />
+                  <span className="font-semibold ml-4">Track your weight</span>
+                </div>
+                <ArrowForwardIcon />
+              </button>
+            )}
             {userdoc.usertype === "Instructor" && (
               <button
                 onClick={() => {

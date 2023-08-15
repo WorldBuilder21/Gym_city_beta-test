@@ -283,7 +283,18 @@ export default function AccountModal({
                           View instructors
                         </button>
 
-                        <button className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700 ">
+                        <button
+                          onClick={() => {
+                            if (pathname === "/profile") {
+                              navigate("/profile/reviews");
+                              dispatch(getUserId(" "));
+                            } else {
+                              navigate(`/${uid}/reviews`);
+                              dispatch(getUserId(uid));
+                            }
+                          }}
+                          className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700 "
+                        >
                           View reviews
                         </button>
                       </>
@@ -296,7 +307,18 @@ export default function AccountModal({
                         ) : (
                           <></>
                         )}
-                        <button className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700 ">
+                        <button
+                          onClick={() => {
+                            if (pathname === "/profile") {
+                              navigate("/profile/reviews");
+                              dispatch(getUserId(" "));
+                            } else {
+                              navigate(`/${uid}/reviews`);
+                              dispatch(getUserId(uid));
+                            }
+                          }}
+                          className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700 "
+                        >
                           View reviews
                         </button>
                         <button
