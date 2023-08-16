@@ -10,12 +10,7 @@ import CommentDialogBox from "./CommentDialogBox";
 import LikeButton from "./LikeButton";
 import { getCommentCount } from "../../../../Services/firebase";
 
-export default function CommentSection({
-  docId,
-  uid,
-
-  commentInput,
-}) {
+export default function CommentSection({ docId, uid, commentInput }) {
   const [openModal, setOpenModal] = useState(false);
   const { status, data: comments } = useQuery(
     {
@@ -118,6 +113,7 @@ export default function CommentSection({
                       <CommentDialogBox
                         Fragment={Fragment}
                         isOpen={openModal}
+                        uid={uid}
                         // comments={comments}
                         handleClose={closeModal}
                         docId={docId}

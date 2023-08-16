@@ -20,13 +20,16 @@ export default function CommentDialogBox({
   Fragment,
   handleClose,
   //   comments,
+  uid,
   docId,
 }) {
   const [comment, setComment] = useState("");
   const commentInput = useRef(null);
   const queryClient = useQueryClient();
   const custom_user = useSelector((state) => state.user.user);
-  const uid = custom_user.uid;
+  // const uid = custom_user.uid;
+
+  console.log("comments uids:", uid);
 
   const {
     status,
@@ -37,7 +40,8 @@ export default function CommentDialogBox({
     fetchNextPage,
   } = useInfiniteQuery({
     queryKey: ["comments", "infinite"],
-    queryFn: () => handlePaginateComments(docId, uid),
+    queryFn: (pageParam) =>
+      handlePaginateComments(docId, uid, pageParam.pageParam),
     getNextPageParam: (lastPage) => lastPage.nextPage,
   });
 
@@ -163,8 +167,8 @@ export default function CommentDialogBox({
                               key={comment.id}
                             >
                               <CommentsTile
-                                item={comment?.data()}
-                                uid={comment?.data()?.uid}
+                                item={comment}
+                                uid={comment?.uid}
                                 docId={docId}
                               />
                             </div>

@@ -51,9 +51,9 @@ export default function CommentsTile({ docId, item, uid }) {
         <Avatar src={userData.photoUrl} />
         <div className="flex flex-col ml-2 justify-center items-start">
           <p className="font-semibold">
-            {userData.usertype === "Gym"
-              ? userData.gymname
-              : userData.displayName}
+            {userData?.usertype === "Gym"
+              ? userData?.gymname
+              : userData?.displayName}
           </p>
           <p>
             {deleteCommentMutation.status === "loading"
@@ -63,7 +63,7 @@ export default function CommentsTile({ docId, item, uid }) {
           <p className="text-xs text-gray-400">{formattedDate}</p>
         </div>
       </div>
-      {custom_user.uid === item.uid ? (
+      {custom_user.uid === item?.uid ? (
         <button
           disabled={deleteCommentMutation.status === "loading" ? true : false}
           onClick={handleDeleteComment}
