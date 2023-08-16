@@ -6,7 +6,7 @@ import { arrayRemove, doc, updateDoc } from "firebase/firestore";
 import RoutineSkeletons from "./Components/RoutineSkeletons";
 import WorkoutRoutineCard from "./Components/WorkoutRoutineCard";
 import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
-import { db } from "../../firebase";
+import { db, storage } from "../../firebase";
 import AddAPhotoIcon from "@mui/icons-material/AddAPhoto";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { getRoutineDocs } from "../../Services/firebase";
@@ -19,6 +19,7 @@ import Groups2Icon from "@mui/icons-material/Groups2";
 import CustomCarousel from "./Components/CustomCarousel/CustomCarousel";
 import GymCard from "./GymCard/GymCard";
 import ComponentSkeleton from "../Components/ComponentSkeleton";
+import { deleteObject, ref } from "firebase/storage";
 
 const Alert = React.forwardRef(function Alert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
@@ -42,6 +43,8 @@ export default function UserHomeScreen() {
 
   const handleDelete = async ({ item }) => {
     const docRef = doc(db, "users", custom_user.uid);
+    const fileRef = ref(storage, item);
+    deleteObject(fileRef);
     return await updateDoc(docRef, {
       photoUrls: arrayRemove(item),
     });
@@ -84,13 +87,10 @@ export default function UserHomeScreen() {
     status,
     data: routines,
     refetch: refetch_routine,
-  } = useQuery(
-    {
-      queryKey: ["routines", "5"],
-      queryFn: () => getRoutineDocs(custom_user.uid),
-    },
-    { enabled: false }
-  );
+  } = useQuery({
+    queryKey: ["routines", "5"],
+    queryFn: () => getRoutineDocs(custom_user.uid),
+  });
 
   const closeModal = () => {
     setOpenModal(false);
@@ -227,6 +227,10 @@ export default function UserHomeScreen() {
                     </p>
                     <p className="text-xs text-gray-500 dark:text-gray-400">
                       SVG, PNG, JPG
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      Select images that motivate you to be placed into your
+                      slider
                     </p>
                   </div>
                   <input
@@ -368,7 +372,7 @@ export default function UserHomeScreen() {
                     </span>
                   </div>
                 ) : (
-                  <div>
+                  <div className="flex flex-wrap">
                     {routines?.docs?.map((data, index) => (
                       <WorkoutRoutineCard key={index} data={data.data()} />
                     ))}

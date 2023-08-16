@@ -3,7 +3,7 @@ import { useSelector } from "react-redux";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createComment } from "../../../../Services/firebase";
 
-export default function AddComments({ commentInput, docId }) {
+export default function AddComments({ commentInput, docId, refetch }) {
   const [comment, setComment] = useState("");
   const custom_user = useSelector((state) => state.user.user);
   const uid = custom_user.uid;
@@ -12,6 +12,7 @@ export default function AddComments({ commentInput, docId }) {
   const createCommentMutation = useMutation({
     mutationFn: createComment,
     onSuccess: (data) => {
+      refetch();
       queryClient.invalidateQueries(["comments"]);
     },
   });

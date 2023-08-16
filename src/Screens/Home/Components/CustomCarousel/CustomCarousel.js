@@ -15,6 +15,7 @@ export default function CustomCarousel(props) {
     handleOpen,
     message,
     Fragment,
+    refetch,
   } = props;
 
   const [emblaRef, emblaApi] = useEmblaCarousel(options, [Autoplay()]);
@@ -39,6 +40,7 @@ export default function CustomCarousel(props) {
                   <span className="text-sm p-2 ">{index + 1}</span>
                 </div>
 
+                {/* delete picture */}
                 <div
                   onClick={handleOpen}
                   className="absolute top-2 right-4 hover:cursor-pointer hover:bg-slate-200  bg-slate-100 rounded-full p-2 md:p-4"
@@ -62,7 +64,10 @@ export default function CustomCarousel(props) {
                   Fragment={Fragment}
                   isOpen={isOpen}
                   handleClose={handleClose}
-                  handleTask={handleTask}
+                  handleTask={() => {
+                    console.log("item:", item);
+                    handleTask({ item: item });
+                  }}
                   message={message}
                 />
 

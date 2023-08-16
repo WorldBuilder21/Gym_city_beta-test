@@ -23,6 +23,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
+import { useQueryClient } from "@tanstack/react-query";
 
 const Alert = React.forwardRef(function Alert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
@@ -71,6 +72,8 @@ export default function AddWorkoutRoutine() {
     Sunday: [],
   });
   const custom_user = useSelector((state) => state.user.user);
+
+  const queryClient = useQueryClient();
 
   const { handleSubmit, getValues, control, watch } = useForm();
 
@@ -177,11 +180,14 @@ export default function AddWorkoutRoutine() {
               photoUrl: url,
             });
             setIsLoading(false);
+            queryClient.invalidateQueries(["routines", "5"]);
+            queryClient.invalidateQueries(["routines"]);
             navigate(-1);
           });
         });
       } else {
         setIsLoading(false);
+        queryClient.invalidateQueries(["routines", "5"]);
         navigate(-1);
       }
     } catch (error) {

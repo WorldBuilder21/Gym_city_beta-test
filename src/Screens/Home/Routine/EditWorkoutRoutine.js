@@ -22,6 +22,7 @@ import {
   ref,
   uploadBytes,
 } from "firebase/storage";
+import { useQueryClient } from "@tanstack/react-query";
 
 const Alert = React.forwardRef(function Alert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
@@ -64,6 +65,9 @@ export default function EditWorkoutRoutine() {
   const [groupedWorkout, setGroupedWorkout] = useState(routineData.routines);
 
   const { vertical, horizontal, open, message, severity } = state;
+
+  // "routines", "5"
+  const queryClient = useQueryClient();
 
   const { handleSubmit, getValues, control, watch } = useForm();
 
@@ -173,9 +177,11 @@ export default function EditWorkoutRoutine() {
         total_workouts: total_workouts,
       });
       navigate(-1);
+      queryClient.invalidateQueries(["routines", "5"]);
       setIsLoading(false);
     } catch (error) {
       console.log(error);
+
       setIsLoading(false);
       openSnackbar({
         message: "An error has occured, please try again later.",

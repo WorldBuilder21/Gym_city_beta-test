@@ -9,15 +9,18 @@ import SkeletonFullView from "./components/SkeletonFullView";
 
 export default function ViewPostScreen() {
   let { id } = useParams();
-  const user_doc = useSelector((state) => state.userdoc.userdoc);
+  // const user_doc = useSelector((state) => state.userdoc.userdoc);
   const custom_user = useSelector((state) => state.user.user);
   const commentInput = useRef(null);
 
   const navigate = useNavigate();
-  const { status, data: postData } = useQuery({
-    queryKey: ["post", id],
-    queryFn: () => getPostData(custom_user.uid, id),
-  });
+  const { status, data: postData } = useQuery(
+    {
+      queryKey: ["post", id],
+      queryFn: () => getPostData(custom_user.uid, id),
+    },
+    { enabled: false }
+  );
 
   return (
     <div>
@@ -58,7 +61,8 @@ export default function ViewPostScreen() {
             <FullViewPostCard
               commentInput={commentInput}
               data={postData}
-              userdata={user_doc}
+              // userdata={user_doc}
+              ts={postData?.ts}
               docId={id}
             />
           </div>

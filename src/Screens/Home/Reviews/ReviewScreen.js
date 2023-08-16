@@ -9,7 +9,6 @@ import ErrorMessage from "../../Components/ErrorMessage";
 import ReviewsIcon from "@mui/icons-material/Reviews";
 import ReviewCard from "./Components/ReviewCard";
 import ComponentSkeleton from "../../Components/ComponentSkeleton";
-import { checkIfReviewExist } from "../../../Services/ReviewFirebase/review";
 import { checkifFriendOrMember } from "../../../Services/firebase";
 import ReactStars from "react-rating-stars-component";
 import { getTotalNumberOfReviews } from "../../../Services/ReviewFirebase/review";
@@ -21,6 +20,12 @@ import { Box } from "@mui/material";
 import { getRatingNumber } from "../../../Services/ReviewFirebase/review";
 import OverallStarRating from "./Components/OverallStarRating";
 import RatingSelector from "./Components/RatingSelector";
+import MuiAlert from "@mui/material/Alert";
+import { Snackbar } from "@mui/material";
+
+const Alert = React.forwardRef(function Alert(props, ref) {
+  return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
+});
 
 export default function ReviewScreen() {
   const navigate = useNavigate();
@@ -30,7 +35,23 @@ export default function ReviewScreen() {
   const custom_user = useSelector((state) => state.user.user);
 
   const [isMember, setIsMember] = useState(false);
-  const [exist, setExist] = useState(false);
+
+  const [state, setState] = useState({
+    open: false,
+    vertical: "top",
+    horizontal: "right",
+    message: "",
+    severity: "",
+  });
+  const { vertical, horizontal, open, message, severity } = state;
+
+  const openSnackbar = (newState) => {
+    setState({ open: true, ...newState });
+  };
+
+  const closeSnackbar = () => {
+    setState({ ...state, open: false });
+  };
 
   const numberRatings = [1, 2, 3, 4, 5];
 
@@ -182,10 +203,30 @@ export default function ReviewScreen() {
   console.log("five percent:", five_percent);
 
   useEffect(() => {
-    checkifFriendOrMember(userId, custom_user.uid, "Gym");
-  }, []);
+    checkifFriendOrMember(userId, custom_user.uid, "Gym").then((result) => {
+      setIsMember(result);
+    });
+  }, [custom_user.uid, userId]);
   return (
     <div>
+      <Snackbar
+        open={open}
+        autoHideDuration={10000}
+        onClose={closeSnackbar}
+        anchorOrigin={{
+          vertical: "top",
+          horizontal: "right",
+        }}
+        key={vertical + horizontal}
+      >
+        <Alert
+          onClose={closeSnackbar}
+          sx={{ width: "100%" }}
+          severity={severity}
+        >
+          {message}
+        </Alert>
+      </Snackbar>
       <nav className="bg-white px-4 py-4 relative  z-20 top-0 left-0 border-b border-gray-200 mb-2 drop-shadow-md">
         <div className="container flex flex-wrap  items-center">
           <div className="flex flex-wrap items-center justify-center">
@@ -321,39 +362,43 @@ export default function ReviewScreen() {
 
         <div className="w-full rounded-full mt-4 border bg-gray-300 h-0.5" />
 
-        {custom_user.uid !== userId && (
-          <div>
-            <button
-              className="mt-2 mb-2 disabled:opacity-25 text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-12 py-2.5 text-center"
-              onClick={handleOpenModal}
-            >
-              <div className="flex items-center justify-center">
-                <span className="mr-1">Write a review </span>
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="1.5"
-                  stroke="currentColor"
-                  className="w-6 h-6"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"
-                  />
-                </svg>
-              </div>
-            </button>
-            <ReviewDialogBox
-              uid={userId}
-              isOpen={openModal}
-              Fragment={Fragment}
-              handleClose={handleCloseModal}
-              refetch={refetch}
-            />
-          </div>
-        )}
+        {custom_user.uid !== userId &&
+          (isMember ? (
+            <div>
+              <button
+                className="mt-2 mb-2 disabled:opacity-25 text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-12 py-2.5 text-center"
+                onClick={handleOpenModal}
+              >
+                <div className="flex items-center justify-center">
+                  <span className="mr-1">Write a review </span>
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="1.5"
+                    stroke="currentColor"
+                    className="w-6 h-6"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M6 12L3.269 3.126A59.768 59.768 0 0121.485 12 59.77 59.77 0 013.27 20.876L5.999 12zm0 0h7.5"
+                    />
+                  </svg>
+                </div>
+              </button>
+              <ReviewDialogBox
+                uid={userId}
+                isOpen={openModal}
+                Fragment={Fragment}
+                handleClose={handleCloseModal}
+                refetch={refetch}
+                openSnackbar={openSnackbar}
+              />
+            </div>
+          ) : (
+            <></>
+          ))}
         <RatingSelector
           selectedType={selectedType}
           setSelectedType={setSelectedType}

@@ -38,7 +38,7 @@ export default function CommentDialogBox({
   } = useInfiniteQuery({
     queryKey: ["comments", "infinite"],
     queryFn: () => handlePaginateComments(docId, uid),
-    getNextPageParam: (lastPage) =>lastPage.nextPage,
+    getNextPageParam: (lastPage) => lastPage.nextPage,
   });
 
   console.log(data);
@@ -130,7 +130,7 @@ export default function CommentDialogBox({
                     />
 
                     <button
-                      disabled={comment.length < 1}
+                      disabled={comment?.length < 1}
                       onClick={onSubmit}
                       type="button"
                       className={`text-sm font-bold text-blue-600 ${
@@ -155,16 +155,16 @@ export default function CommentDialogBox({
                     </div>
                   ) : (
                     <div>
-                      {data.pages.map((page, index) => (
+                      {data?.pages?.map((page, index) => (
                         <div key={index} className="space-y-3">
-                          {page.comments.docs.map((comment) => (
+                          {page?.comments?.docs?.map((comment, index) => (
                             <div
                               className="w-full flex-col space-y-3"
                               key={comment.id}
                             >
                               <CommentsTile
-                                item={comment.data()}
-                                uid={comment.data().uid}
+                                item={comment?.data()}
+                                uid={comment?.data()?.uid}
                                 docId={docId}
                               />
                             </div>

@@ -9,6 +9,8 @@ import ImageIcon from "@mui/icons-material/Image";
 import { getRoutineData } from "../../../utils/store/routine/routineSlice";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteRoutine } from "../../../Services/firebase";
+import { doc } from "firebase/firestore";
+import { formatDistance } from "date-fns";
 
 export default function WorkoutRoutineCard({ data }) {
   const navigate = useNavigate();
@@ -19,23 +21,30 @@ export default function WorkoutRoutineCard({ data }) {
   const deleteRoutineMutation = useMutation({
     mutationFn: deleteRoutine,
     onSuccess: (data) => {
-      queryClient.invalidateQueries(["routines"]);
+      queryClient.invalidateQueries(["routines", "5"]);
     },
   });
   const uid = custom_user.uid;
-  const docId = data.id;
+  const docId = data?.docId;
+
+  console.log("docId:", data);
 
   const routineColorCode = () => {
-    if (data.difficulty.name === "Beginner") {
+    if (data?.difficulty.name === "Beginner") {
       return "bg-green-500";
     }
-    if (data.difficulty.name === "Intermediate") {
+    if (data?.difficulty.name === "Intermediate") {
       return "bg-amber-500";
     }
-    if (data.difficulty.name === "Expert") {
+    if (data?.difficulty.name === "Expert") {
       return "bg-red-500";
     }
   };
+
+  const date = new Date(
+    data?.ts?.seconds * 1000 + data?.ts?.nanoseconds / 1000000
+  );
+  const formattedDate = formatDistance(date, new Date());
 
   const handleDeleteRoutine = () => {
     deleteRoutineMutation.mutate({ uid, docId, data });
@@ -63,7 +72,7 @@ export default function WorkoutRoutineCard({ data }) {
     <div className="p-4 relative w-full max-w-sm mb-4 md:mr-4 rounded-lg border-gray-200 shadow">
       <div className="flex flex-col">
         <div className="flex items-center mb-2 justify-between">
-          <div className="font-semibold text-xl">Your routine</div>
+          <div className="font-semibold text-lg">Your routine</div>
           <Menu as="div" className="flex md:order-2">
             <div>
               <Menu.Button className="inline-flex items-center p-2 text-sm text-gray-500 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200">
@@ -92,22 +101,27 @@ export default function WorkoutRoutineCard({ data }) {
           className="flex items-center"
         >
           <Avatar
-            src={data.photoUrl}
+            src={data?.photoUrl}
             sx={{ width: 100, height: 100 }}
             variant="rounded"
           >
             <ImageIcon />
           </Avatar>
-          <div className="w-full ml-3">
-            <div className="font-bold text-xl">{data.title}</div>
-            <div>total workouts: {data.total_workouts}</div>
-            <div
-              className={`${routineColorCode()} text-white text-center w-full mt-2 font-medium text-md px-2.5 py-1.5 rounded border`}
-            >
-              {data.difficulty.name}
+          <span className="w-full ml-3 text-ellipsis overflow-hidden">
+            <p className="font-bold text-xl block truncate">{data?.title}</p>
+            <div>total workouts: {data?.total_workouts}</div>
+            <div>
+              <div
+                className={`${routineColorCode()} text-white text-center w-full mt-2 font-medium text-md px-2.5 py-1.5 rounded border`}
+              >
+                {data.difficulty.name}
+              </div>
             </div>
-          </div>
+          </span>
         </div>
+        <span className="flex mt-2 justify-end items-end text-sm text-slate-500">
+          {formattedDate}
+        </span>
       </div>
     </div>
   );

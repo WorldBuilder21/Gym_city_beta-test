@@ -24,6 +24,7 @@ export default function CreatePostDialogBox({
   Fragment,
   handleClose,
   openSnackbar,
+  refetch,
 }) {
   const { handleSubmit, getValues, control, watch, reset } = useForm();
   const imageRef = useRef();
@@ -75,6 +76,7 @@ export default function CreatePostDialogBox({
           await updateDoc(updateRef, {
             docId: postRef.id,
           });
+          refetch();
           handleClose();
           setImageFile(null);
           setPostFile(null);
@@ -125,7 +127,14 @@ export default function CreatePostDialogBox({
                   <Dialog.Title as="h3" className="font-semibold text-lg">
                     Create post
                   </Dialog.Title>
-                  <IconButton onClick={handleClose}>
+                  <IconButton
+                    onClick={() => {
+                      handleClose();
+                      setImageFile(null);
+                      setPostFile(null);
+                      reset();
+                    }}
+                  >
                     <Close />
                   </IconButton>
                 </div>

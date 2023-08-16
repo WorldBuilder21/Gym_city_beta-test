@@ -318,10 +318,35 @@ export const getPostData = async (userid, postId) => {
   return docSnap.data();
 };
 
-export const getPostsDocs = async (uid) => {
+export const getCommentsCount = async (userid, postId) => {
+  const docRef = doc(db, "users", userid, "posts", postId, "comments");
+  const snapshot = await getCountFromServer(docRef);
+  return snapshot.data().count;
+};
+
+export const getPostsDocs = async (uid, nextPageParam = undefined) => {
   const postsRef = collection(db, "users", uid, "posts");
+  let q = query(postsRef, orderBy("ts", "desc"), limit(15));
+
+  if (nextPageParam !== undefined) {
+    q = query(
+      postsRef,
+      orderBy("ts", "desc"),
+      startAfter(nextPageParam),
+      limit(15)
+    );
+  }
   const snapshot = await getDocs(postsRef);
-  return snapshot;
+
+  const posts = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
+  const hasNextPage = posts.length === 15;
+
+  const lastsnapshot = snapshot.docs[snapshot.docs.length - 1];
+
+  const nextPage = hasNextPage ? lastsnapshot : undefined;
+
+  return { posts, nextPage };
 };
 
 export const createComment = async ({ uid, docId, comment }) => {
@@ -358,7 +383,7 @@ export const createComment = async ({ uid, docId, comment }) => {
   }
 };
 
-export const getAllComments = async (docId, uid) => {
+export const getAllComments = async ({ docId, uid }) => {
   const commentRef = collection(db, "users", uid, "posts", docId, "comments");
   const q = query(commentRef, orderBy("ts", "desc"), limit(2));
   const snapshot = await getDocs(q);
@@ -383,10 +408,30 @@ export const isLiked = async (docId, uid) => {
   return docSnap.exists();
 };
 
-export const getRoutineDocs = async (uid) => {
+export const getRoutineDocs = async (uid, nextPageParam = undefined) => {
   const routineRef = collection(db, "users", uid, "routines");
-  const snapshot = await getDocs(routineRef);
-  return snapshot;
+
+  let q = query(routineRef, orderBy("ts", "desc"), limit(15));
+
+  if (nextPageParam !== undefined) {
+    q = query(
+      routineRef,
+      orderBy("ts", "desc"),
+      startAfter(nextPageParam),
+      limit(15)
+    );
+  }
+  const snapshot = await getDocs(q);
+
+  const routines = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
+  const hasNextPage = routines.length === 15;
+
+  const lastsnapshot = snapshot.docs[snapshot.docs.length - 1];
+
+  const nextPage = hasNextPage ? lastsnapshot : undefined;
+
+  return { routines, nextPage };
 };
 
 export const deleteRoutine = async ({ uid, docId, data }) => {
@@ -445,26 +490,37 @@ export const deleteComment = async ({ uid, postId, commentId }) => {
   }
 };
 
-export const handlePaginateComments = async (docId, uid, pageParam = null) => {
+export const handlePaginateComments = async (
+  docId,
+  uid,
+  nextPageParam = null
+) => {
   const commentRef = collection(db, "users", uid, "posts", docId, "comments");
-  const q = query(commentRef, orderBy("ts", "desc"), limit(15));
-  let comments = await getDocs(q);
 
-  const lastVisible = comments.docs[comments.docs.length - 1];
+  let q = query(commentRef, orderBy("ts", "desc"), limit(15));
 
-  if (lastVisible === 15) {
-    const next = query(
+  if (nextPageParam !== undefined) {
+    q = query(
       commentRef,
       orderBy("ts", "desc"),
-      startAfter(lastVisible),
+      startAfter(nextPageParam),
       limit(15)
     );
-    comments = await getDocs(next);
   }
+
+  const snapshot = await getDocs(q);
+
+  const comments = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
+  const hasNextPage = comments.length === 15;
+
+  const lastsnapshot = snapshot.docs[snapshot.docs.length - 1];
+
+  const nextPage = hasNextPage ? lastsnapshot : undefined;
 
   return {
     comments,
-    nextPage: lastVisible,
+    nextPage,
   };
 };
 

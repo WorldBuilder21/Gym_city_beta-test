@@ -6,7 +6,10 @@ import { useForm, getValues, Controller } from "react-hook-form";
 import { white_spaces_remover } from "../../../../Services/whitespaceRegex";
 import Charactercounter from "../../../Auth/Components/BioCharacterCounter";
 import ReactStars from "react-rating-stars-component";
-import { sendReview } from "../../../../Services/ReviewFirebase/review";
+import {
+  sendReview,
+  checkIfReviewExist,
+} from "../../../../Services/ReviewFirebase/review";
 import { useSelector } from "react-redux";
 
 export default function ReviewDialogBox({
@@ -16,6 +19,7 @@ export default function ReviewDialogBox({
   refetch,
   refetchCount,
   isOpen,
+  openSnackbar,
 }) {
   const [isLoading, setIsLoading] = useState(false);
   const [rating, setRating] = useState(0);
@@ -38,12 +42,26 @@ export default function ReviewDialogBox({
 
     const { message } = getValues();
 
-    await sendReview({ senderId: custom_user.uid, uid, message, rating });
+    const exist = await checkIfReviewExist({ uid, senderId: custom_user.uid });
 
-    refetch();
-    setIsLoading(false);
-    handleClose();
-    setRating(0);
+    if (exist) {
+      openSnackbar({
+        message: "You have already posted a review",
+        severity: "error",
+      });
+      setIsLoading(false);
+      handleClose();
+      setRating(0);
+      reset();
+    } else {
+      await sendReview({ senderId: custom_user.uid, uid, message, rating });
+
+      refetch();
+      reset();
+      setIsLoading(false);
+      handleClose();
+      setRating(0);
+    }
   };
   return (
     <Transition appear show={isOpen} as={Fragment}>

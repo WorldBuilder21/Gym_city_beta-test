@@ -1,7 +1,7 @@
 import React, { Fragment, useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import PostSkeleton from "./components/PostSkeleton";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { getPostsDocs } from "../../../Services/firebase";
 import ErrorMessage from "../../Components/ErrorMessage";
 import MuiAlert from "@mui/material/Alert";
@@ -9,6 +9,7 @@ import { Snackbar } from "@mui/material";
 import { sendUserRequest } from "../../../Services/firebase";
 import PostPlaceholder from "./components/PostPlaceholder";
 import SubscriptionCard from "../Components/SubscriptionCard";
+import { ref } from "firebase/storage";
 
 const Alert = React.forwardRef(function Alert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
@@ -35,10 +36,27 @@ export default function PostScreen({
   const { vertical, horizontal, open, message, severity } = state;
   // const [viewStatus, setViewStatus] = useState(false);
 
-  const { status, data: posts } = useQuery(
+  // const { status, data: posts } = useQuery(
+  //   {
+  //     queryKey: ["posts"],
+  //     queryFn: () => getPostsDocs(uid),
+  //   },
+  //   { enabled: false }
+  // );
+
+  const {
+    status,
+    error,
+    data: posts,
+    refetch,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery(
     {
       queryKey: ["posts"],
-      queryFn: () => getPostsDocs(uid),
+      queryFn: (pageParam) => getPostsDocs(uid, pageParam.pageParam),
+      getNextPageParam: (lastpage) => lastpage.nextPage,
     },
     { enabled: false }
   );
@@ -83,17 +101,15 @@ export default function PostScreen({
           closeModal={closeModal}
           openPostModal={openPostModal}
           uid={uid}
+          hasNextPage={hasNextPage}
+          isFetchingNextPage={isFetchingNextPage}
+          fetchNextPage={fetchNextPage}
+          refetch={refetch}
         />
       );
     } else {
       console.log("switchCase:", user_data?.postPrivacyStatus);
-      // switch (user_data?.postPrivacyStatus) {
-      //   case "Friend only" && "Members only":
-      //     console.log("Hello World");
-      //     return <div>Hello World</div>;
-      //   default:
-      //     break;
-      // }
+
       switch (user_data?.postPrivacyStatus) {
         case "Friends only" && "Members only":
           switch (viewStatus) {
@@ -108,6 +124,10 @@ export default function PostScreen({
                   closeModal={closeModal}
                   openPostModal={openPostModal}
                   uid={uid}
+                  hasNextPage={hasNextPage}
+                  isFetchingNextPage={isFetchingNextPage}
+                  fetchNextPage={fetchNextPage}
+                  refetch={refetch}
                 />
               );
             case false:
@@ -138,6 +158,10 @@ export default function PostScreen({
                   closeModal={closeModal}
                   openPostModal={openPostModal}
                   uid={uid}
+                  hasNextPage={hasNextPage}
+                  isFetchingNextPage={isFetchingNextPage}
+                  fetchNextPage={fetchNextPage}
+                  refetch={refetch}
                 />
               );
 
@@ -166,91 +190,16 @@ export default function PostScreen({
               closeModal={closeModal}
               openPostModal={openPostModal}
               uid={uid}
+              hasNextPage={hasNextPage}
+              isFetchingNextPage={isFetchingNextPage}
+              fetchNextPage={fetchNextPage}
+              refetch={refetch}
             />
           );
 
         default:
           break;
       }
-
-      // if (
-      //   user_data?.postPrivacyStatus === "Friends only" ||
-      //   user_data?.postPrivacyStatus === "Members only"
-      // ) {
-      //   console.log("Hello???");
-      //   if (viewStatus === true) {
-      //     return (
-      //       <PostPlaceholder
-      //         posts={posts}
-      //         custom_user={custom_user}
-      //         Fragment={Fragment}
-      //         openModal={openModal}
-      //         openSnackbar={openSnackbar}
-      //         closeModal={closeModal}
-      //         openPostModal={openPostModal}
-      //         uid={uid}
-      //       />
-      //     );
-      //   } else {
-      //     return (
-      //       <div className="mt-40">
-      //         <SubscriptionCard
-      //           handleRequest={handleRequest}
-      //           data={user_data}
-      //           userdoc={userdoc}
-      //         />
-      //       </div>
-      //     );
-      //   }
-      // }
-      // if (user_data?.postPrivacyStatus === "Private") {
-      //   if (custom_user.uid === uid) {
-      //     return (
-      //       <PostPlaceholder
-      //         posts={posts}
-      //         custom_user={custom_user}
-      //         Fragment={Fragment}
-      //         openModal={openModal}
-      //         openSnackbar={openSnackbar}
-      //         closeModal={closeModal}
-      //         openPostModal={openPostModal}
-      //         uid={uid}
-      //       />
-      //     );
-      //   } else {
-      //     return (
-      //       <div className="flex flex-col justify-center items-center mt-40">
-      //         <span className="text-center font-semibold text-gray-400 mt-2 text-xl">
-      //           This users posts are private.
-      //         </span>
-      //       </div>
-      //     );
-      //   }
-      // }
-
-      // if (user_data?.postPrivacyStatus === "Public") {
-      //   return (
-      //     <PostPlaceholder
-      //       posts={posts}
-      //       custom_user={custom_user}
-      //       Fragment={Fragment}
-      //       openModal={openModal}
-      //       openSnackbar={openSnackbar}
-      //       closeModal={closeModal}
-      //       openPostModal={openPostModal}
-      //       uid={uid}
-      //     />
-      //   );
-      // } else {
-      //   return (
-      //     <></>
-      //     // <div className="flex flex-col mt-40 justify-center items-center">
-      //     //   <span className="text-center font-semibold text-red-500 mt-2 text-xl">
-      //     //     Invalid privacy status
-      //     //   </span>
-      //     // </div>
-      //   );
-      // }
     }
   };
 

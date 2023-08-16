@@ -39,6 +39,10 @@ export default function PictureDisplayBox({
       setFile(null);
       setUrl(null);
     },
+    onError: () => {
+      setFile(null);
+      setUrl(null);
+    },
   });
 
   console.log("url", uid);
@@ -79,6 +83,8 @@ export default function PictureDisplayBox({
           message: "An error has occurred whiles uploading the image.",
           severity: "error",
         });
+        setIsLoading(false);
+        handleClose();
       }
     }
   };
@@ -90,6 +96,8 @@ export default function PictureDisplayBox({
         className="relative z-10"
         onClose={() => {
           handleClose();
+          setFile(null);
+          setUrl(null);
         }}
       >
         <Transition.Child
@@ -119,7 +127,13 @@ export default function PictureDisplayBox({
                   <Dialog.Title as="h3" className="font-semibold text-lg">
                     Add picture
                   </Dialog.Title>
-                  <IconButton onClick={handleClose}>
+                  <IconButton
+                    onClick={() => {
+                      handleClose();
+                      setFile(null);
+                      setUrl(null);
+                    }}
+                  >
                     <Close />
                   </IconButton>
                 </div>

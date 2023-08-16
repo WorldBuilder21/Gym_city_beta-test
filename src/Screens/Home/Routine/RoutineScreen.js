@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router";
 import { getRoutineDocs } from "../../../Services/firebase";
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { useSelector } from "react-redux";
 import RoutineSkeletons from "../Components/RoutineSkeletons";
 import ErrorMessage from "../../Components/ErrorMessage";
@@ -19,27 +19,30 @@ export default function RoutineScreen({
   const custom_user = useSelector((state) => state.user.user);
   const userdoc = useSelector((state) => state.userdoc.userdoc);
   // const [viewStatus, setViewStatus] = useState(false);
-  const navigate = useNavigate();
-  const { status, data: routines } = useQuery(
-    {
-      queryKey: ["routines"],
-      queryFn: () => getRoutineDocs(uid),
-    },
-    { enabled: false }
-  );
 
-  // useEffect(() => {
-  //   if (
-  //     data?.routinePrivacyStatus === "Friends only" ||
-  //     data?.routinePrivacyStatus === "Members only"
-  //   ) {
-  //     checkifFriendOrMember(uid, custom_user.uid, data?.usertype).then(
-  //       (result) => {
-  //         setViewStatus(result);
-  //       }
-  //     );
-  //   }
-  // }, [custom_user.uid, uid, data?.routinePrivacyStatus, data?.usertype]);
+  const navigate = useNavigate();
+
+  // const { status, data: routines } = useQuery(
+  //   {
+  //     queryKey: ["routines"],
+  //     queryFn: () => getRoutineDocs(uid),
+  //   },
+  //   { enabled: false }
+  // );
+
+  const {
+    status,
+    error,
+    data: routines,
+    refetch,
+    hasNextPage,
+    fetchNextPage,
+    isFetchingNextPage,
+  } = useInfiniteQuery({
+    queryKey: ["routines"],
+    queryFn: (pageParam) => getRoutineDocs(uid, pageParam.pageParam),
+    getNextPageParam: (lastpage) => lastpage.nextPage,
+  });
 
   const displayFunction = () => {
     if (custom_user.uid === uid) {
@@ -49,6 +52,9 @@ export default function RoutineScreen({
           navigate={navigate}
           custom_user={custom_user}
           uid={uid}
+          hasNextPage={hasNextPage}
+          isFetchingNextPage={isFetchingNextPage}
+          fetchNextPage={fetchNextPage}
         />
       );
     } else {
@@ -60,6 +66,9 @@ export default function RoutineScreen({
               navigate={navigate}
               custom_user={custom_user}
               uid={uid}
+              hasNextPage={hasNextPage}
+              isFetchingNextPage={isFetchingNextPage}
+              fetchNextPage={fetchNextPage}
             />
           );
         } else {
@@ -82,6 +91,9 @@ export default function RoutineScreen({
               navigate={navigate}
               custom_user={custom_user}
               uid={uid}
+              hasNextPage={hasNextPage}
+              isFetchingNextPage={isFetchingNextPage}
+              fetchNextPage={fetchNextPage}
             />
           );
         } else {
@@ -102,6 +114,9 @@ export default function RoutineScreen({
             navigate={navigate}
             custom_user={custom_user}
             uid={uid}
+            hasNextPage={hasNextPage}
+            isFetchingNextPage={isFetchingNextPage}
+            fetchNextPage={fetchNextPage}
           />
         );
       } else {
@@ -124,6 +139,7 @@ export default function RoutineScreen({
         again"
         />
       ) : (
+        // displayFunction()
         <div>{displayFunction()}</div>
       )}
     </div>

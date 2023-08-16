@@ -17,17 +17,29 @@ export default function CommentSection({
   commentInput,
 }) {
   const [openModal, setOpenModal] = useState(false);
-  const { status, data: comments } = useQuery({
-    queryKey: ["comments"],
-    queryFn: () => getAllComments(docId, uid),
-    enabled: docId !== null,
-  });
+  const { status, data: comments } = useQuery(
+    {
+      queryKey: ["comments"],
+      queryFn: () => getAllComments({ docId, uid }),
+    },
+    { enabled: false }
+  );
 
-  const { status: comment_status, data: count } = useQuery({
-    queryKey: ["count"],
-    queryFn: () => getCommentCount(docId, uid),
-    enabled: docId != null,
-  });
+  console.log("uid:", uid);
+  console.log("docId:", docId);
+
+  const {
+    status: comment_status,
+    data: count,
+    refetch: refetchCount,
+  } = useQuery(
+    {
+      queryKey: ["count"],
+      queryFn: () => getCommentCount(docId, uid),
+      // enabled: docId != null,
+    },
+    { enabled: false }
+  );
 
   const commentsSlice = 2;
 
@@ -57,7 +69,7 @@ export default function CommentSection({
                 ? 0
                 : comment_status === "error"
                 ? 0
-                : count}
+                : commentCount}
             </div>
           </div>
           <div className="flex items-center">
@@ -80,15 +92,17 @@ export default function CommentSection({
               </div>
             ) : (
               <>
-                <div className="flex flex-col space-y-2 mt-2 items-start justify-start">
-                  {comments.docs.slice(0, commentsSlice).map((item, index) => (
-                    <CommentsTile
-                      item={item.data()}
-                      docId={docId}
-                      uid={item.data().uid}
-                      key={index}
-                    />
-                  ))}
+                <div className="flex flex-col space-y-2 mt-4 mb-2 items-start justify-start">
+                  {comments?.docs
+                    ?.slice(0, commentsSlice)
+                    ?.map((item, index) => (
+                      <CommentsTile
+                        item={item?.data()}
+                        docId={docId}
+                        uid={item?.data()?.uid}
+                        key={index}
+                      />
+                    ))}
                 </div>
                 <div className="flex items-center justify-center">
                   {commentCount > commentsSlice && (
@@ -116,7 +130,11 @@ export default function CommentSection({
           </div>
         )}
       </div>
-      <AddComments docId={docId} commentInput={commentInput} />
+      <AddComments
+        refetch={refetchCount}
+        docId={docId}
+        commentInput={commentInput}
+      />
     </>
   );
 }
