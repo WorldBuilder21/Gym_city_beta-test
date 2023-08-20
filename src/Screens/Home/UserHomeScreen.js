@@ -20,6 +20,7 @@ import CustomCarousel from "./Components/CustomCarousel/CustomCarousel";
 import GymCard from "./GymCard/GymCard";
 import ComponentSkeleton from "../Components/ComponentSkeleton";
 import { deleteObject, ref } from "firebase/storage";
+import { getFiveRoutines } from "../../Services/firebase";
 
 const Alert = React.forwardRef(function Alert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
@@ -89,7 +90,7 @@ export default function UserHomeScreen() {
     refetch: refetch_routine,
   } = useQuery({
     queryKey: ["routines", "5"],
-    queryFn: () => getRoutineDocs(custom_user.uid),
+    queryFn: () => getFiveRoutines(custom_user.uid),
   });
 
   const closeModal = () => {

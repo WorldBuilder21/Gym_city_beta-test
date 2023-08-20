@@ -408,6 +408,14 @@ export const isLiked = async (docId, uid) => {
   return docSnap.exists();
 };
 
+export const getFiveRoutines = async (uid) => {
+  const routineRef = collection(db, 'users', uid, 'routines')
+  const q = query(routineRef, orderBy('ts', 'desc'), limit(15))
+  const snapshots = await getDocs(q)
+  return snapshots;
+  
+}
+
 export const getRoutineDocs = async (uid, nextPageParam = undefined) => {
   const routineRef = collection(db, "users", uid, "routines");
 
