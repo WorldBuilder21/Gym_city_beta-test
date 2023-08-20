@@ -13,11 +13,14 @@ export default function ViewPostScreen() {
   const custom_user = useSelector((state) => state.user.user);
   const commentInput = useRef(null);
 
+  // userId here
+  const userId = useSelector((state) => state.userId.userId)
+
   const navigate = useNavigate();
   const { status, data: postData } = useQuery(
     {
       queryKey: ["post", id],
-      queryFn: () => getPostData(custom_user.uid, id),
+      queryFn: () => getPostData(userId, id),
     },
     { enabled: false }
   );
@@ -53,7 +56,7 @@ export default function ViewPostScreen() {
         {status === "error" ? (
           <ErrorMessage message={"This post could not be retrieved"} />
         ) : status === "loading" ? (
-          <div className="flex flex-col mt-10 items-center">
+          <div className="flex flex-col mt-10 mx-2 items-center">
             <SkeletonFullView />
           </div>
         ) : (

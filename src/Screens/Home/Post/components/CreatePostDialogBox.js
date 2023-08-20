@@ -25,6 +25,7 @@ export default function CreatePostDialogBox({
   handleClose,
   openSnackbar,
   refetch,
+  isInstructor
 }) {
   const { handleSubmit, getValues, control, watch, reset } = useForm();
   const imageRef = useRef();

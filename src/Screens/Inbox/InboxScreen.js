@@ -139,12 +139,12 @@ export default function InboxScreen() {
                   {page?.messages?.map((message, index) => (
                     <div key={index} className="w-full">
                       <MessageCard
-                        senderId={message.senderId}
+                        senderId={message?.senderId}
                         key={index}
-                        docId={message.id}
-                        body={message.body}
-                        title={message.title}
-                        ts={message.ts}
+                        docId={message?.id}
+                        body={message?.body}
+                        title={message?.title}
+                        ts={message?.ts}
                         messageData={message}
                       />
                     </div>

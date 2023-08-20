@@ -17,7 +17,14 @@ export default function PostPlaceholder({
   isFetchingNextPage,
   fetchNextPage,
   refetch,
+  isInstructor,
+  accountData,
 }) {
+
+  const sendPostRequest = () =>{
+
+  }
+
   return posts?.pages?.map((page, index) =>
     page?.posts?.length === 0 ? (
       custom_user.uid === uid ? (
@@ -50,10 +57,13 @@ export default function PostPlaceholder({
               handleClose={closeModal}
               openSnackbar={openSnackbar}
               refetch={refetch}
+              isInstructor={false}
             />
           </div>
         </div>
-      ) : (
+      ) : accountData?.usertype === 'Gym' && isInstructor ? <div>
+        <span>No post have been created yet</span>
+      </div> :(
         <div
           key={index}
           className="flex flex-col justify-center items-center mt-40 text-gray-400"
@@ -82,6 +92,7 @@ export default function PostPlaceholder({
               handleClose={closeModal}
               openSnackbar={openSnackbar}
               refetch={refetch}
+              isInstructor={false}
             />
           </div>
         ) : (

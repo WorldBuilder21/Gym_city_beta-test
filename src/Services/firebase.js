@@ -200,7 +200,7 @@ export const creatGymDoc = async ({
     postPrivacyStatus: "Members only",
     routinePrivacyStatus: "Members only",
     inboxPrivacyStatus: "Gym Instructors and Members only",
-    hiringStatus: "hiring",
+    hiringStatus: "Hiring",
   });
 };
 
@@ -232,7 +232,7 @@ export const createGym = async ({
         postPrivacyStatus: "Members only",
         routinePrivacyStatus: "Members only",
         inboxPrivacyStatus: "Gym Instructors and Members only",
-        hiringStatus: "hiring",
+        hiringStatus: "Hiring",
       });
       // await setDoc(memberRef, {
       //   docId: user.uid,
@@ -349,7 +349,7 @@ export const getPostsDocs = async (uid, nextPageParam = undefined) => {
   return { posts, nextPage };
 };
 
-export const createComment = async ({ uid, docId, comment }) => {
+export const createComment = async ({ uid, docId, comment, senderId  }) => {
   try {
     const collectionRef = collection(
       db,
@@ -361,7 +361,7 @@ export const createComment = async ({ uid, docId, comment }) => {
     );
     const docRef = await addDoc(collectionRef, {
       comment,
-      uid,
+      uid: senderId,
       ts: serverTimestamp(),
     });
 
@@ -501,7 +501,7 @@ export const deleteComment = async ({ uid, postId, commentId }) => {
 export const handlePaginateComments = async (
   docId,
   uid,
-  nextPageParam = null
+  nextPageParam = undefined
 ) => {
   const commentRef = collection(db, "users", uid, "posts", docId, "comments");
 
@@ -519,6 +519,10 @@ export const handlePaginateComments = async (
   const snapshot = await getDocs(q);
 
   const comments = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
+
+  console.log('commentsSnapshot:', comments)
+  console.log('snapchat_docId:',docId)
+  console.log('snapshot_uid:', uid)
 
   const hasNextPage = comments.length === 15;
 
