@@ -38,7 +38,7 @@ export default function MemberScreen() {
   } = useQuery(
     {
       queryKey: ["count_member"],
-      queryFn: () => getMemberCount(custom_user.uid),
+      queryFn: () => getMemberCount(userId),
     },
     { enabled: false }
   );

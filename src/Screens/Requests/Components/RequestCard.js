@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import React from "react";
+import React, { useState } from "react";
 import {
   acceptRequest,
   getUserDataUid,
@@ -19,6 +19,7 @@ export default function RequestCard({
 }) {
   const navigate = useNavigate();
   const custom_user = useSelector((state) => state.user.user);
+  const [isLoading, setIsLoading] = useState(false)
 
   const { status, data: userdata } = useQuery(
     {
@@ -33,24 +34,30 @@ export default function RequestCard({
   }
 
   const handleAccept = async () => {
+    setIsLoading(true)
     try {
       console.log("item:", item?.requestType);
       console.log("uid:", uid);
       console.log(custom_user.uid);
+    
       await acceptRequest(custom_user.uid, uid, item?.requestType);
       openSnackbar({ message: "Request accepted." });
       refetch();
       refetchCount();
+      setIsLoading(false)
     } catch (error) {
+      setIsLoading(false)
       console.log(error);
       openSnackbar({ message: "An error has occured.", severity: "error" });
     }
   };
 
   const handleDecline = async () => {
+    setIsLoading(true)
     await declineRequest(custom_user.uid, uid);
     openSnackbar({ message: "Request declined.", severity: "error" });
     refetch();
+    setIsLoading(false)
     refetchCount();
   };
 
@@ -97,14 +104,16 @@ export default function RequestCard({
       </div>
       <div className="flex items-end justify-end mt-3 mr-2 space-x-4">
         <button
+        disabled={isLoading}
           onClick={handleAccept}
-          className="border hover:bg-blue-600 bg-blue-500 rounded-md px-8 py-2 justify-center items-center font-semibold text-white text-center text-sm"
+          className="border disabled:opacity-25 hover:bg-blue-600 bg-blue-500 rounded-md px-8 py-2 justify-center items-center font-semibold text-white text-center text-sm"
         >
           Accept
         </button>
         <button
+        disabled={isLoading}
           onClick={handleDecline}
-          className="border border-black rounded-md px-8 py-2 justify-center hover:text-rose-500 hover:border-red-500 items-center font-semibold text-center text-sm"
+          className="border disabled:opacity-25 border-black rounded-md px-8 py-2 justify-center hover:text-rose-500 hover:border-red-500 items-center font-semibold text-center text-sm"
         >
           Decline
         </button>

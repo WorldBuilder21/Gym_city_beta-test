@@ -15,6 +15,7 @@ export default function RoutineScreen({
   viewStatus,
   openSnackbar,
   handleRequest,
+  isInstructor
 }) {
   const custom_user = useSelector((state) => state.user.user);
   const userdoc = useSelector((state) => state.userdoc.userdoc);
@@ -55,6 +56,8 @@ export default function RoutineScreen({
           hasNextPage={hasNextPage}
           isFetchingNextPage={isFetchingNextPage}
           fetchNextPage={fetchNextPage}
+          isInstructor={isInstructor}
+          accountData={data}
         />
       );
     } else {
@@ -69,6 +72,8 @@ export default function RoutineScreen({
               hasNextPage={hasNextPage}
               isFetchingNextPage={isFetchingNextPage}
               fetchNextPage={fetchNextPage}
+              isInstructor={isInstructor}
+              accountData={data}
             />
           );
         } else {
@@ -94,6 +99,8 @@ export default function RoutineScreen({
               hasNextPage={hasNextPage}
               isFetchingNextPage={isFetchingNextPage}
               fetchNextPage={fetchNextPage}
+              isInstructor={isInstructor}
+              accountData={data}
             />
           );
         } else {
@@ -117,6 +124,8 @@ export default function RoutineScreen({
             hasNextPage={hasNextPage}
             isFetchingNextPage={isFetchingNextPage}
             fetchNextPage={fetchNextPage}
+            isInstructor={isInstructor}
+            accountData={data}
           />
         );
       } else {

@@ -30,20 +30,24 @@ export default function CommentDialogBox({
   // const uid = custom_user.uid;
 
   console.log("comments uids:", uid);
+  console.log('docId:', docId)
 
   const {
     status,
     error,
     data,
-    isFetchingNextPage,
+    refetch,
     hasNextPage,
     fetchNextPage,
+    isFetchingNextPage,
   } = useInfiniteQuery({
     queryKey: ["comments", "infinite"],
     queryFn: (pageParam) =>
       handlePaginateComments(docId, uid, pageParam.pageParam),
     getNextPageParam: (lastPage) => lastPage.nextPage,
   });
+  
+  console.log('paginate error:',error)
 
   console.log(data);
 
@@ -65,6 +69,7 @@ export default function CommentDialogBox({
       uid,
       docId,
       comment,
+      senderId: custom_user.uid
     });
 
     setComment("");
@@ -161,14 +166,14 @@ export default function CommentDialogBox({
                     <div>
                       {data?.pages?.map((page, index) => (
                         <div key={index} className="space-y-3">
-                          {page?.comments?.docs?.map((comment, index) => (
+                          {page?.comments?.map((data, index) => (
                             <div
                               className="w-full flex-col space-y-3"
-                              key={comment.id}
+                              key={data?.id}
                             >
                               <CommentsTile
-                                item={comment}
-                                uid={comment?.uid}
+                                item={data}
+                                uid={data?.uid}
                                 docId={docId}
                               />
                             </div>

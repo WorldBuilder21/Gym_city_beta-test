@@ -2,6 +2,7 @@ import React from "react";
 import WorkoutRoutineCard from "../../Components/WorkoutRoutineCard";
 import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 import RoutineSkeletons from "../../Components/RoutineSkeletons";
+import { useSelector } from "react-redux";
 
 export default function RoutinePlaceHolder({
   routines,
@@ -11,7 +12,24 @@ export default function RoutinePlaceHolder({
   hasNextPage,
   isFetchingNextPage,
   fetchNextPage,
+  isInstructor,
+  accountData
 }) {
+
+
+  // const displayButtonFunction = () => {
+  //   // only owners can view the create the post button
+  //   // if the user is a "Gym" only instructors can view the post button\
+  //   if(custom_user.uid === uid){
+  //     // they can see button
+  //   }
+
+  //   if(userdoc.usertyep === 'Gym'){
+  //     if(isInstructor){
+  //       // they can see button and send a request
+  //     }
+  //   }
+  // }
   return routines?.pages?.map((page, index) =>
     page?.routines?.length === 0 ? (
       custom_user.uid === uid ? (
@@ -37,7 +55,9 @@ export default function RoutinePlaceHolder({
             </button>
           </div>
         </div>
-      ) : (
+      ) : accountData?.usertype === 'Gym' && isInstructor ? <div>
+        <span>No post has been created yet</span>
+      </div> :(
         <div
           key={index}
           className="flex flex-col items-center justify-center mt-40"

@@ -129,6 +129,7 @@ export default function CommentSection({ docId, uid, commentInput }) {
       <AddComments
         refetch={refetchCount}
         docId={docId}
+        userId={uid}
         commentInput={commentInput}
       />
     </>

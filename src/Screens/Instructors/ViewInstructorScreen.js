@@ -3,15 +3,19 @@ import ErrorMessage from "../Components/ErrorMessage";
 import ComponentSkeleton from "../Components/ComponentSkeleton";
 import InstructorCard from "./components/InstructorCard";
 import GroupIcon from "@mui/icons-material/Group";
-import { useNavigate } from "react-router";
+import { useNavigate, useParams } from "react-router";
 import { useSelector } from "react-redux";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import { viewInstructors, getInstructorCount } from "../../Services/firebase";
 
 export default function ViewInstructorScreen() {
+
+
   const navigate = useNavigate();
   const userId = useSelector((state) => state.userId.userId);
   const custom_user = useSelector((state) => state.user.user);
+
+  console.log('userId:', userId)
 
   const {
     status,
@@ -24,12 +28,13 @@ export default function ViewInstructorScreen() {
   } = useInfiniteQuery(
     {
       queryKey: ["instructors"],
-      queryFn: () => viewInstructors(userId === " " ? custom_user.uid : userId),
+      queryFn: (pageParam) => viewInstructors(userId === " " ? custom_user.uid : userId, pageParam.pageParam),
       getNextPageParam: (lastpage) => lastpage.nextPage,
     },
     { enabled: false }
   );
 
+  console.log('instructor_data:', data)
   const {
     status: count_status,
     data: count,
@@ -37,7 +42,7 @@ export default function ViewInstructorScreen() {
   } = useQuery(
     {
       queryKey: ["count_instructors"],
-      queryFn: () => getInstructorCount(custom_user.uid),
+      queryFn: () => getInstructorCount(userId),
     },
     { enabled: false }
   );
@@ -110,7 +115,7 @@ export default function ViewInstructorScreen() {
                 </div>
               ) : (
                 <div key={index} className="max-w-lg w-full">
-                  {page?.instructors.map((instructor, index) => (
+                  {page?.instructors?.map((instructor, index) => (
                     <InstructorCard
                       key={index}
                       refetch={refetch}

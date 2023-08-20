@@ -86,7 +86,7 @@ export default function ProfileScreen() {
       // if the account you are viewing has blocked you.
       // id: id of the account being viewed
       // custom_user.uid: the id of the person viewing
-      if (userdoc?.usertype === "Instructor") {
+      if (user_doc?.usertype === "Instructor") {
         checkIfInstructor(id, custom_user.uid).then((result) => {
           setIsInstructor(result);
           setViewStatus(result);
@@ -146,7 +146,8 @@ export default function ProfileScreen() {
     if (id !== undefined) {
       const request_check = await checkIfRequest(id, custom_user.uid);
       if (request_check === false) {
-        if (userdoc.usertype === "Instructor") {
+        
+        if (user_doc.usertype === "Instructor") {
           if (isInstructor === true) {
             openSnackbar({
               message: "You are already an Instructor in this gym.",
@@ -452,17 +453,19 @@ export default function ProfileScreen() {
               <PostScreen
                 viewStatus={viewStatus}
                 user_data={userdoc}
-                uid={id ? id : custom_user.uid}
+                uid={id !== undefined ? id : custom_user.uid}
                 handleRequest={handleRequest}
+                isInstructor={isInstructor}
               />
             </TabPanel>
             <TabPanel value={value} index={1}>
               <RoutineScreen
                 viewStatus={viewStatus}
                 data={userdoc}
-                uid={id ? id : custom_user.uid}
+                uid={id !== undefined ? id : custom_user.uid}
                 openSnackbar={openSnackbar}
                 handleRequest={handleRequest}
+                isInstructor={isInstructor}
               />
             </TabPanel>
           </div>

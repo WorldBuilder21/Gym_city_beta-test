@@ -204,7 +204,7 @@ export default function PrivacyScreen() {
               </div>
             </div>
             {userdoc.usertype === "Gym" && (
-              <div>
+              <div className="mb-10">
                 <span className="font-semibold text-md">Hiring status:</span>
                 <div className="mt-2 space-y-3">
                   <button

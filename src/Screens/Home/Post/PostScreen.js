@@ -20,6 +20,7 @@ export default function PostScreen({
   user_data,
   viewStatus,
   handleRequest,
+  isInstructor
 }) {
   // used to show the person viewing the profile
   const custom_user = useSelector((state) => state.user.user);
@@ -80,14 +81,6 @@ export default function PostScreen({
     setState({ ...state, open: false });
   };
 
-  const handleTask = () => {
-    sendUserRequest(
-      uid,
-      custom_user.uid,
-      user_data?.usertype === "Gym" ? "Membership" : "Friends"
-    );
-    openSnackbar({ message: "Request sent successfully." });
-  };
 
   const displayFunction = () => {
     if (custom_user.uid === uid) {
@@ -105,6 +98,8 @@ export default function PostScreen({
           isFetchingNextPage={isFetchingNextPage}
           fetchNextPage={fetchNextPage}
           refetch={refetch}
+          isInstructor={isInstructor}
+          accountData={user_data}
         />
       );
     } else {
@@ -128,6 +123,8 @@ export default function PostScreen({
                   isFetchingNextPage={isFetchingNextPage}
                   fetchNextPage={fetchNextPage}
                   refetch={refetch}
+                  isInstructor={isInstructor}
+                  accountData={user_data}
                 />
               );
             case false:
@@ -162,6 +159,8 @@ export default function PostScreen({
                   isFetchingNextPage={isFetchingNextPage}
                   fetchNextPage={fetchNextPage}
                   refetch={refetch}
+                  isInstructor={isInstructor}
+                  accountData={user_data}
                 />
               );
 
@@ -194,6 +193,8 @@ export default function PostScreen({
               isFetchingNextPage={isFetchingNextPage}
               fetchNextPage={fetchNextPage}
               refetch={refetch}
+              isInstructor={isInstructor}
+              accountData={user_data}
             />
           );
 
