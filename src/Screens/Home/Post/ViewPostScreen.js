@@ -2,10 +2,11 @@ import React, { useRef, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import FullViewPostCard from "./components/FullViewPostCard";
 import { useSelector } from "react-redux";
-import { getPostData } from "../../../Services/firebase";
+import { checkIfUserisBlocked, getPostData } from "../../../Services/firebase";
 import ErrorMessage from "../../Components/ErrorMessage";
 import { useQuery } from "@tanstack/react-query";
 import SkeletonFullView from "./components/SkeletonFullView";
+import BlockIcon from "@mui/icons-material/Block";
 
 export default function ViewPostScreen() {
   let { id } = useParams();
@@ -14,7 +15,7 @@ export default function ViewPostScreen() {
   const commentInput = useRef(null);
 
   // userId here
-  const userId = useSelector((state) => state.userId.userId)
+  const userId = useSelector((state) => state.userId.userId);
 
   const navigate = useNavigate();
   const { status, data: postData } = useQuery(
@@ -24,6 +25,15 @@ export default function ViewPostScreen() {
     },
     { enabled: false }
   );
+
+  const {
+    status: blocked_status,
+    data: blockData,
+    refetch: refetchBlockedStatus,
+  } = useQuery({
+    queryKey: ["blocked Status"],
+    queryFn: () => checkIfUserisBlocked(userId, custom_user.uid),
+  });
 
   return (
     <div>
@@ -55,9 +65,18 @@ export default function ViewPostScreen() {
 
         {status === "error" ? (
           <ErrorMessage message={"This post could not be retrieved"} />
-        ) : status === "loading" ? (
+        ) : status === "loading" && blocked_status === "loading" ? (
           <div className="flex flex-col mt-10 mx-2 items-center">
             <SkeletonFullView />
+          </div>
+        ) : blockData === true ? (
+          <div className="h-screen flex flex-col items-center justify-center">
+            <div className="flex text-red-500 flex-col justify-center items-center mt-40">
+              <BlockIcon sx={{ fontSize: 150 }} />
+              <span className="mt-3 text-lg text-center font-semibold">
+                You have been blocked by this user.
+              </span>
+            </div>
           </div>
         ) : (
           <div className="flex mx-2 md:mx-0 flex-col mt-10 items-center">
@@ -66,7 +85,9 @@ export default function ViewPostScreen() {
               data={postData}
               // userdata={user_doc}
               ts={postData?.ts}
+              gymId={userId}
               docId={id}
+              refetchBlockedStatus={refetchBlockedStatus}
             />
           </div>
         )}

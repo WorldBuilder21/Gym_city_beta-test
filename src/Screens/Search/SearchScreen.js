@@ -142,7 +142,7 @@ function Search() {
               {gym_data.empty ? (
                 <div className="flex justify-center items-center">
                   <span className="text-lg mt-16 mb-16 text-gray-500">
-                    There are no instructors to display
+                    There are no gyms to display
                   </span>
                 </div>
               ) : (

@@ -7,7 +7,7 @@ import { useSelector } from "react-redux";
 import LazyLoad from "react-lazy-load";
 import CustomDialogBox from "../../../Settings/Components/CustomDialogBox";
 import { useQuery } from "@tanstack/react-query";
-import { getUserDataUid } from "../../../../Services/firebase";
+import { checkIfUserisBlocked, getUserDataUid } from "../../../../Services/firebase";
 import { formatDistance } from "date-fns";
 
 export default function FullViewPostCard({
@@ -16,6 +16,8 @@ export default function FullViewPostCard({
   Fragment,
   commentInput,
   docId,
+  refetchBlockedStatus,
+  gymId,
 }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -30,8 +32,8 @@ export default function FullViewPostCard({
 
   const { status, data: userData } = useQuery(
     {
-      queryKey: ["post user", userId],
-      queryFn: () => getUserDataUid(userId),
+      queryKey: ["post user", data?.creatorId],
+      queryFn: () => getUserDataUid(data?.creatorId),
     },
     { enabled: false }
   );
@@ -106,12 +108,7 @@ export default function FullViewPostCard({
                 </div>
               </div>
             )}
-            {/* {<div className="flex justify-center items-center">
-              <Avatar src={userdata.photoUrl} />
-              <div className="ml-2">
-                <p className="font-semibold">{userdata.gymname}</p>
-              </div>
-            </div>} */}
+
             <button onClick={handleOpen} type="button">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
@@ -128,54 +125,6 @@ export default function FullViewPostCard({
                 />
               </svg>
             </button>
-
-            {/* <Transition appear show={isOpen} as={Fragment}>
-            <Dialog as="div" className="relative z-10" onClose={handleClose}>
-              <Transition.Child
-                as={Fragment}
-                enter="ease-out duration-300"
-                enterFrom="opacity-0"
-                enterTo="opacity-100"
-                leave="ease-in duration-200"
-                leaveFrom="opacity-100"
-                leaveTo="opacity-0"
-              >
-                <div className="fixed inset-0 bg-black bg-opacity-25" />
-              </Transition.Child>
-              <div className="fixed inset-0 overflow-y-auto">
-                <div className="flex min-h-full items-center justify-center p-4 text-center">
-                  <Transition.Child
-                    as={Fragment}
-                    enter="ease-out duration-300"
-                    enterFrom="opacity-0 scale-95"
-                    enterTo="opacity-100 scale-100"
-                    leave="ease-in duration-200"
-                    leaveFrom="opacity-100 scale-100"
-                    leaveTo="opacity-0 scale-95"
-                  >
-                    <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-lg bg-white p-6 text-left align-middle shadow-xl transition-all">
-                      <div className="mt-2">
-                        <p className="text-md text-gray-700">
-                          Are you sure you want to delete this post.
-                        </p>
-                      </div>
-                      <div className="flex items-center justify-between mt-5 mx-10">
-                        <button
-                          className="font-semibold text-red-700"
-                          onClick={deletePost}
-                        >
-                          Yes
-                        </button>
-                        <button className="font-semibold" onClick={handleClose}>
-                          No
-                        </button>
-                      </div>
-                    </Dialog.Panel>
-                  </Transition.Child>
-                </div>
-              </div>
-            </Dialog>
-          </Transition> */}
           </div>
 
           {isLoading ? (
@@ -194,17 +143,18 @@ export default function FullViewPostCard({
           ) : (
             <img
               className="rounded-md bg-black mb-2 mt-2"
-              src={data.photoUrl}
-              alt={data.caption}
+              src={data?.photoUrl}
+              alt={data?.caption}
             />
           )}
 
-          <div className="mb-2 mt-2">{data.caption}</div>
+          <div className="mb-2 mt-2">{data?.caption}</div>
 
           <CommentSection
             commentInput={commentInput}
             docId={docId}
             uid={userId}
+            refetchBlockedStatus={refetchBlockedStatus}
           />
         </div>
         <span className="text-sm mt-2 text-slate-500 flex justify-end">

@@ -178,6 +178,7 @@ export default function EditWorkoutRoutine() {
       });
       navigate(-1);
       queryClient.invalidateQueries(["routines", "5"]);
+      queryClient.invalidateQueries(["routines"]);
       setIsLoading(false);
     } catch (error) {
       console.log(error);

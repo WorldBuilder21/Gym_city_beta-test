@@ -23,6 +23,7 @@ export default function InstructorMenu({
   };
 
   const blockFunc = async () => {
+    handleCloseBlockModal()
     await blockInstructor(uid, docId);
     refetch();
     refetchCount();

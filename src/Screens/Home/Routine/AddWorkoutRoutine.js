@@ -1,6 +1,6 @@
 import React, { Fragment, useRef, useState } from "react";
 import { Avatar, Snackbar, TextField } from "@mui/material";
-import { useNavigate } from "react-router";
+import { useLocation, useNavigate } from "react-router";
 import { useForm, Controller } from "react-hook-form";
 import checkLimit from "../../../Services/filesizeChecker";
 import MuiAlert from "@mui/material/Alert";
@@ -54,6 +54,7 @@ export default function AddWorkoutRoutine() {
   const [workoutFile, setWorkoutFile] = useState(null);
   const [difficulty, setDifficulty] = useState(difficultyLevels[0]);
   const [day, setDay] = useState("");
+  const location = useLocation();
   const [state, setState] = useState({
     open: false,
     vertical: "top",
@@ -72,8 +73,11 @@ export default function AddWorkoutRoutine() {
     Sunday: [],
   });
   const custom_user = useSelector((state) => state.user.user);
+  const userId = useSelector((state) => state.userId.userId);
 
   const queryClient = useQueryClient();
+
+  console.log("userId: ", userId);
 
   const { handleSubmit, getValues, control, watch } = useForm();
 
@@ -139,56 +143,106 @@ export default function AddWorkoutRoutine() {
     setIsLoading(true);
     try {
       const total_workouts = calctotalWorkout();
-      const docRef = collection(db, `users/${custom_user.uid}/routines`);
-      const routineRef = await addDoc(docRef, {
-        title,
-        bio,
-        difficulty,
-        photoUrl: "",
-        creatorId: custom_user.uid,
-        routines: groupedWorkout,
-        ts: serverTimestamp(),
-        docId: "",
-        total_workouts,
-      });
-      const updateRef = doc(
-        db,
-        "users",
-        custom_user.uid,
-        "routines",
-        routineRef.id
-      );
-      await updateDoc(updateRef, {
-        docId: routineRef.id,
-      });
-      if (imageFile !== null) {
-        const storageRef = ref(
-          storage,
-          `/routinepfp/${Date.now()}${workoutFile.name}`
-        );
-        const uploadImage = uploadBytes(storageRef, imageFile);
-        uploadImage.then((snapshot) => {
-          getDownloadURL(snapshot.ref).then(async (url) => {
-            const docRef = doc(
-              db,
-              "users",
-              custom_user.uid,
-              "routines",
-              routineRef.id
-            );
-            await updateDoc(docRef, {
-              photoUrl: url,
-            });
-            setIsLoading(false);
-            queryClient.invalidateQueries(["routines", "5"]);
-            queryClient.invalidateQueries(["routines"]);
-            navigate(-1);
-          });
+      if (location.pathname === "/profile/routineDraft") {
+        // sending of request
+        const request_collection = collection(db, `users/${userId}/requests`);
+        const requestRef = await addDoc(request_collection, {
+          title,
+          bio,
+          difficulty,
+          photoUrl: "",
+          senderId: custom_user.uid,
+          requestType: "RoutineDraft",
+          routines: groupedWorkout,
+          ts: serverTimestamp(),
+          docId: "",
+          total_workouts,
+          gymId: userId,
         });
+        const updateRef = doc(db, "users", userId, "requests", requestRef.id);
+        await updateDoc(updateRef, {
+          docId: requestRef.id,
+        });
+
+        if (imageFile !== null) {
+          const storageRef = ref(
+            storage,
+            `/routinepfp/${Date.now()}${workoutFile.name}`
+          );
+          const uploadImage = uploadBytes(storageRef, imageFile);
+          uploadImage.then((snapshot) => {
+            getDownloadURL(snapshot.ref).then(async (url) => {
+              const docRef = doc(
+                db,
+                "users",
+                userId,
+                "routines",
+                requestRef.id
+              );
+              await updateDoc(docRef, {
+                photoUrl: url,
+              });
+              setIsLoading(false);
+              navigate(-1);
+            });
+          });
+        } else {
+          setIsLoading(false);
+          navigate(-1);
+        }
       } else {
-        setIsLoading(false);
-        queryClient.invalidateQueries(["routines", "5"]);
-        navigate(-1);
+        const docRef = collection(db, `users/${custom_user.uid}/routines`);
+        const routineRef = await addDoc(docRef, {
+          title,
+          bio,
+          difficulty,
+          photoUrl: "",
+          creatorId: custom_user.uid,
+          routines: groupedWorkout,
+          ts: serverTimestamp(),
+          docId: "",
+          total_workouts,
+        });
+        const updateRef = doc(
+          db,
+          "users",
+          custom_user.uid,
+          "routines",
+          routineRef.id
+        );
+        await updateDoc(updateRef, {
+          docId: routineRef.id,
+        });
+        if (imageFile !== null) {
+          const storageRef = ref(
+            storage,
+            `/routinepfp/${Date.now()}${workoutFile.name}`
+          );
+          const uploadImage = uploadBytes(storageRef, imageFile);
+          uploadImage.then((snapshot) => {
+            getDownloadURL(snapshot.ref).then(async (url) => {
+              const docRef = doc(
+                db,
+                "users",
+                custom_user.uid,
+                "routines",
+                routineRef.id
+              );
+              await updateDoc(docRef, {
+                photoUrl: url,
+              });
+              setIsLoading(false);
+              queryClient.invalidateQueries(["routines", "5"]);
+              queryClient.invalidateQueries(["routines"]);
+              navigate(-1);
+            });
+          });
+        } else {
+          setIsLoading(false);
+          queryClient.invalidateQueries(["routines", "5"]);
+          queryClient.invalidateQueries(["routines"]);
+          navigate(-1);
+        }
       }
     } catch (error) {
       console.log(error);
@@ -445,7 +499,9 @@ export default function AddWorkoutRoutine() {
               type="submit"
               className="w-full disabled:opacity-25 mt-5 text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
             >
-              Create
+              {location.pathname === "/profile/routineDraft"
+                ? "Send draft"
+                : "Create"}
             </button>
           </form>
         </div>

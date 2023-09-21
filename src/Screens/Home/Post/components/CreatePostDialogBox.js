@@ -9,7 +9,6 @@ import AddAPhotoIcon from "@mui/icons-material/AddAPhoto";
 import Charactercounter from "../../../Auth/Components/BioCharacterCounter";
 import { getDownloadURL, ref, uploadBytes } from "firebase/storage";
 import {
-  Timestamp,
   addDoc,
   collection,
   doc,
@@ -25,7 +24,9 @@ export default function CreatePostDialogBox({
   handleClose,
   openSnackbar,
   refetch,
-  isInstructor
+  isInstructor,
+  draft,
+  gymId,
 }) {
   const { handleSubmit, getValues, control, watch, reset } = useForm();
   const imageRef = useRef();
@@ -33,6 +34,8 @@ export default function CreatePostDialogBox({
   const [isLoading, setIsLoading] = useState(false);
   const [postFile, setPostFile] = useState(null);
   const custom_user = useSelector((state) => state.user.user);
+
+  const userdoc = useSelector((state) => state.userdoc.userdoc);
 
   const handleChange = (event) => {
     const files = Array.from(event.target.files);
@@ -60,31 +63,72 @@ export default function CreatePostDialogBox({
       const uploadImage = uploadBytes(storageRef, imageFile);
       uploadImage.then((snapshot) => {
         getDownloadURL(snapshot.ref).then(async (url) => {
-          const docRef = collection(db, `users/${custom_user.uid}/posts`);
-          const postRef = await addDoc(docRef, {
-            caption,
-            photoUrl: url,
-            creatorId: custom_user.uid,
-            ts: serverTimestamp(),
-          });
-          const updateRef = doc(
-            db,
-            "users",
-            custom_user.uid,
-            "posts",
-            postRef.id
-          );
-          await updateDoc(updateRef, {
-            docId: postRef.id,
-          });
-          refetch();
-          handleClose();
-          setImageFile(null);
-          setPostFile(null);
-          reset();
+          if (draft) {
+            try {
+              const docRef = collection(db, `users/${gymId}/requests`);
+              const requestRef = await addDoc(docRef, {
+                ts: serverTimestamp(),
+                requestType: "PostDraft",
+                senderId: custom_user.uid,
+                // will always be instructors
+                sendertype: userdoc.usertype,
+                caption,
+                photoUrl: url,
+                gymId,
+              });
+              await updateDoc(requestRef, {
+                docId: requestRef.id,
+              });
+              refetch();
+              handleClose();
+              setImageFile(null);
+              setPostFile(null);
+              setIsLoading(false);
+              reset();
+              openSnackbar({ message: "Draft sent successfully." });
+            } catch (error) {
+              openSnackbar({
+                message: "An error occurred whiles sending the draft.",
+                severity: "error",
+              });
+            }
+          } else {
+            try {
+              const docRef = collection(db, `users/${custom_user.uid}/posts`);
+              const postRef = await addDoc(docRef, {
+                caption,
+                photoUrl: url,
+                creatorId: custom_user.uid,
+                ts: serverTimestamp(),
+              });
+              const updateRef = doc(
+                db,
+                "users",
+                custom_user.uid,
+                "posts",
+                postRef.id
+              );
+              await updateDoc(updateRef, {
+                docId: postRef.id,
+              });
+              refetch();
+              handleClose();
+              setImageFile(null);
+              setIsLoading(false);
+              setPostFile(null);
+              reset();
+              openSnackbar({ message: "Post created successfully." });
+            } catch (error) {
+              openSnackbar({
+                message: "An error occurred whiles sending the draft.",
+                severity: "error",
+              });
+            }
+          }
         });
       });
     } else {
+      setIsLoading(false);
       handleClose();
       reset();
     }
@@ -126,7 +170,7 @@ export default function CreatePostDialogBox({
               <Dialog.Panel className="w-full max-w-md transform overflow-hidden rounded-lg bg-white p-6 text-left align-middle shadow-xl transition-all">
                 <div className="flex flex-row items-center justify-between mb-2">
                   <Dialog.Title as="h3" className="font-semibold text-lg">
-                    Create post
+                    {draft ? "Create draft" : "Create post"}
                   </Dialog.Title>
                   <IconButton
                     onClick={() => {
@@ -202,7 +246,7 @@ export default function CreatePostDialogBox({
                     type="submit"
                     className="w-full disabled:opacity-25 mt-5 text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-5 py-2.5 text-center"
                   >
-                    Post
+                    {draft ? "Send draft" : "Post"}
                   </button>
                 </form>
               </Dialog.Panel>

@@ -153,7 +153,7 @@ export default function WeightTrackerScreen() {
 
   console.log("findWeeks:", findWeekInMonth());
 
-  const [data, setData] = useState({});
+  const [data, setData] = useState({ datasets: [{ data: [] }] });
 
   useEffect(() => {
     if (record_status === "loading") {
@@ -170,10 +170,38 @@ export default function WeightTrackerScreen() {
           },
         ],
       });
+    } else if (record_status === "error") {
+      setData({
+        // calculate by the week number, Week 1 , Week 2 etc
+        labels: findWeekInMonth()?.map((data) => data),
+
+        datasets: [
+          {
+            label: "Error",
+            backgroundColor: "red",
+            data: [],
+            borderColor: "black",
+          },
+        ],
+      });
+    } else if (record_data === undefined) {
+      setData({
+        // calculate by the week number, Week 1 , Week 2 etc
+        labels: findWeekInMonth()?.map((data) => data),
+
+        datasets: [
+          {
+            label: "No Records",
+            backgroundColor: "red",
+            data: [],
+            borderColor: "black",
+          },
+        ],
+      });
     } else {
       setData({
         // calculate by the week number, Week 1 , Week 2 etc
-        labels: findWeekInMonth().map((data) => data),
+        labels: findWeekInMonth()?.map((data) => data),
 
         datasets: [
           {
@@ -187,7 +215,8 @@ export default function WeightTrackerScreen() {
     }
   }, [record_data, record_status]);
 
-  console.log("record_data", record_data?.length === 0);
+  console.log("record_data: ", record_data);
+  console.log("custom user:", custom_user);
 
   const {
     status: weight_status,
@@ -225,6 +254,8 @@ export default function WeightTrackerScreen() {
   console.log("format:", moment(date).format("LLL"));
 
   console.log("ts:", date);
+
+  console.log("data: ", data);
 
   // const percentage = 66;
   function getWeeksInMonth(year, month) {

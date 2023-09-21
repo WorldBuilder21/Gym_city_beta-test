@@ -20,7 +20,7 @@ export default function PostScreen({
   user_data,
   viewStatus,
   handleRequest,
-  isInstructor
+  isInstructor,
 }) {
   // used to show the person viewing the profile
   const custom_user = useSelector((state) => state.user.user);
@@ -63,7 +63,6 @@ export default function PostScreen({
   );
 
   // data about the user profile being view
-  console.log("user:", user_data);
 
   const closeModal = () => {
     setOpenModal(false);
@@ -80,7 +79,6 @@ export default function PostScreen({
   const closeSnackbar = () => {
     setState({ ...state, open: false });
   };
-
 
   const displayFunction = () => {
     if (custom_user.uid === uid) {
@@ -103,10 +101,42 @@ export default function PostScreen({
         />
       );
     } else {
-      console.log("switchCase:", user_data?.postPrivacyStatus);
-
       switch (user_data?.postPrivacyStatus) {
-        case "Friends only" && "Members only":
+        case "Friends only":
+          switch (viewStatus) {
+            case true:
+              return (
+                <PostPlaceholder
+                  posts={posts}
+                  custom_user={custom_user}
+                  Fragment={Fragment}
+                  openModal={openModal}
+                  openSnackbar={openSnackbar}
+                  closeModal={closeModal}
+                  openPostModal={openPostModal}
+                  uid={uid}
+                  hasNextPage={hasNextPage}
+                  isFetchingNextPage={isFetchingNextPage}
+                  fetchNextPage={fetchNextPage}
+                  refetch={refetch}
+                  isInstructor={isInstructor}
+                  accountData={user_data}
+                />
+              );
+            case false:
+              return (
+                <div className="flex flex-col justify-center items-center mt-40">
+                  <span className="text-center font-semibold text-gray-400 mt-2 text-xl">
+                    To view this user's posts, you must be on their friends
+                    list.
+                  </span>
+                </div>
+              );
+            default:
+              break;
+          }
+          break;
+        case "Members only":
           switch (viewStatus) {
             case true:
               return (
@@ -203,9 +233,6 @@ export default function PostScreen({
       }
     }
   };
-
-  console.log(user_data?.postPrivacyStatus);
-  console.log("user_data:", user_data);
 
   return (
     <>

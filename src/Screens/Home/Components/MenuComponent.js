@@ -1,5 +1,15 @@
 import React from "react";
 import { Dialog, Menu, Transition } from "@headlessui/react";
+import { checkifFriendOrMember } from "../../../Services/firebase";
+import { useSelector } from "react-redux";
+import {
+  addDoc,
+  collection,
+  doc,
+  serverTimestamp,
+  updateDoc,
+} from "firebase/firestore";
+import { db } from "../../../firebase";
 
 export default function MenuComponent({
   Fragment,
@@ -9,7 +19,44 @@ export default function MenuComponent({
   deleteFunc,
   editFunc,
   message,
+  data,
+  openSnackbar,
+  usertype,
+  accountData,
 }) {
+  const custom_user = useSelector((state) => state.user.user);
+  // check if member or friend
+  const addRoutine = async () => {
+    const isFriendOrMember = await checkifFriendOrMember(
+      data.creatorId,
+      custom_user.uid,
+      usertype
+    );
+    if (isFriendOrMember) {
+      // add to the user routine list
+      const docRef = collection(`users/${custom_user.uid}/routines`);
+      const routineRef = await addDoc(docRef, data);
+      const updateRef = doc(
+        db,
+        "users",
+        custom_user.uid,
+        "routines",
+        routineRef.id
+      );
+      await updateDoc(updateRef, {
+        docId: routineRef.id,
+        ts: serverTimestamp(),
+      });
+    } else {
+      // open snackbar which display a message indicating the user is not a member or a friend.
+      const message =
+        usertype === "Gym"
+          ? "You are not a member of this gym."
+          : "You are not a friend of this user.";
+      openSnackbar({ message: message, severity: "error" });
+    }
+    // console.log(data);
+  };
   return (
     <>
       <Transition appear show={isOpen} as={Fragment}>
@@ -71,6 +118,37 @@ export default function MenuComponent({
           className="absolute right-2 mt-2 w-56 origin-top-right  rounded-md bg-white p-2 shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
         >
           <div className="px-1 py-1">
+            {accountData?.docId === custom_user.uid ? (
+              <></>
+            ) : (
+              <Menu.Item>
+                {({ close }) => (
+                  <button
+                    onClick={() => {
+                      close();
+                      addRoutine();
+                    }}
+                    className={`hover:bg-gray-100 group flex w-full font-semibold items-center rounded-md px-2 py-2 text-sm`}
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth="1.5"
+                      stroke="currentColor"
+                      className="mr-2 -ml-1 w-6 h-6"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M12 4.5v15m7.5-7.5h-15"
+                      />
+                    </svg>
+                    Add routine
+                  </button>
+                )}
+              </Menu.Item>
+            )}
             <Menu.Item>
               {({ close }) => (
                 <button

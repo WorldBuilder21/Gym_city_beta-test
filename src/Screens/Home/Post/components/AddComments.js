@@ -1,12 +1,20 @@
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createComment } from "../../../../Services/firebase";
+import {
+  checkIfUserisBlocked,
+  createComment,
+} from "../../../../Services/firebase";
 
-export default function AddComments({ commentInput, docId, refetch, userId }) {
+export default function AddComments({
+  commentInput,
+  docId,
+  refetch,
+  userId,
+  refetchBlockedStatus,
+}) {
   const [comment, setComment] = useState("");
   const custom_user = useSelector((state) => state.user.user);
-  const uid = custom_user.uid;
   const queryClient = useQueryClient();
 
   const createCommentMutation = useMutation({
@@ -20,12 +28,18 @@ export default function AddComments({ commentInput, docId, refetch, userId }) {
   const handleSubmitComment = async (e) => {
     e.preventDefault();
 
-    createCommentMutation.mutate({
-      uid,
-      docId,
-      comment,
-      senderId: userId
-    });
+    const isblocked = await checkIfUserisBlocked(userId, custom_user.uid);
+
+    if (isblocked) {
+      refetchBlockedStatus();
+    } else {
+      createCommentMutation.mutate({
+        uid: userId,
+        docId,
+        comment,
+        senderId: custom_user.uid,
+      });
+    }
 
     setComment("");
   };

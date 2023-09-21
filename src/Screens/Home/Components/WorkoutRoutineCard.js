@@ -11,8 +11,9 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteRoutine } from "../../../Services/firebase";
 import { doc } from "firebase/firestore";
 import { formatDistance } from "date-fns";
+import { getUserId } from "../../../utils/store/user/getUserIdSlice";
 
-export default function WorkoutRoutineCard({ data }) {
+export default function WorkoutRoutineCard({ data, refetch, openSnackbar, usertype, accountData }) {
   const navigate = useNavigate();
   const custom_user = useSelector((state) => state.user.user);
   const [isOpen, setIsOpen] = useState(false);
@@ -49,6 +50,7 @@ export default function WorkoutRoutineCard({ data }) {
   const handleDeleteRoutine = () => {
     deleteRoutineMutation.mutate({ uid, docId, data });
     handleClose();
+    refetch();
   };
   // const deleteRoutine = async () => {
   //   const docRef = doc(db, `users/${custom_user.uid}/routines/${data.id}`);
@@ -72,7 +74,7 @@ export default function WorkoutRoutineCard({ data }) {
     <div className="p-4 relative w-full max-w-sm mb-4 md:mr-4 rounded-lg border-gray-200 shadow">
       <div className="flex flex-col">
         <div className="flex items-center mb-2 justify-between">
-          <div className="font-semibold text-lg">Your routine</div>
+          {data.creatorId === custom_user.uid ? <div className="font-semibold text-lg">Your routine</div> : <div />}
           <Menu as="div" className="flex md:order-2">
             <div>
               <Menu.Button className="inline-flex items-center p-2 text-sm text-gray-500 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200">
@@ -84,18 +86,23 @@ export default function WorkoutRoutineCard({ data }) {
               openModal={handleOpen}
               isOpen={isOpen}
               handleClose={handleClose}
+              data={data}
               message={"Are you sure you want to delete this routine"}
               deleteFunc={handleDeleteRoutine}
               editFunc={() => {
                 dispatch(getRoutineData(data));
                 navigate("/home/editWorkoutRoutine");
               }}
+              openSnackbar={openSnackbar}
+              usertype={usertype}
+              accountData={accountData}
             />
           </Menu>
         </div>
         <div
           onClick={() => {
             dispatch(getRoutineData(data));
+            dispatch(getUserId(data.creatorId));
             navigate("/home/viewRoutine");
           }}
           className="flex items-center"

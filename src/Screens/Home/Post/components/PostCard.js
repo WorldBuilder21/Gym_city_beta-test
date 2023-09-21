@@ -17,6 +17,10 @@ export default function PostCard({ data, uid }) {
 
   console.log("userdoc:", user_doc);
 
+  console.log('docId:', data?.docId)
+
+  console.log(uid)
+
   // comment counter
   // uid, postId
   const {
@@ -26,7 +30,7 @@ export default function PostCard({ data, uid }) {
   } = useQuery(
     {
       queryKey: ["count_comments"],
-      queryFn: () => getCommentCount(uid, data.docId),
+      queryFn: () => getCommentCount(data?.docId, uid),
     },
     { enabled: false }
   );
@@ -39,10 +43,14 @@ export default function PostCard({ data, uid }) {
   } = useQuery(
     {
       queryKey: ["count_likes"],
-      queryFn: () => getLikeCount(uid, data.docId),
+      queryFn: () => getLikeCount(data?.docId, uid),
     },
     { enabled: false }
   );
+
+
+  console.log('count likes: ', count_likes)
+  console.log('count_comment: ', count_comment)
 
   const like_counter =
     count_status_likes === "loading"

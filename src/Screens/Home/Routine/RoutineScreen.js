@@ -15,7 +15,7 @@ export default function RoutineScreen({
   viewStatus,
   openSnackbar,
   handleRequest,
-  isInstructor
+  isInstructor,
 }) {
   const custom_user = useSelector((state) => state.user.user);
   const userdoc = useSelector((state) => state.userdoc.userdoc);
@@ -58,6 +58,9 @@ export default function RoutineScreen({
           fetchNextPage={fetchNextPage}
           isInstructor={isInstructor}
           accountData={data}
+          refetch={refetch}
+          openSnackbar={openSnackbar}
+          
         />
       );
     } else {
@@ -74,6 +77,8 @@ export default function RoutineScreen({
               fetchNextPage={fetchNextPage}
               isInstructor={isInstructor}
               accountData={data}
+              refetch={refetch}
+              openSnackbar={openSnackbar}
             />
           );
         } else {
@@ -85,10 +90,7 @@ export default function RoutineScreen({
             </div>
           );
         }
-      } else if (
-        data?.routinePrivacyStatus === "Friends only" ||
-        data?.routinePrivacyStatus === "Members only"
-      ) {
+      } else if (data?.routinePrivacyStatus === "Members only") {
         if (viewStatus === true) {
           return (
             <RoutinePlaceHolder
@@ -101,6 +103,8 @@ export default function RoutineScreen({
               fetchNextPage={fetchNextPage}
               isInstructor={isInstructor}
               accountData={data}
+              openSnackbar={openSnackbar}
+              refetch={refetch}
             />
           );
         } else {
@@ -111,6 +115,32 @@ export default function RoutineScreen({
                 data={data}
                 userdoc={userdoc}
               />
+            </div>
+          );
+        }
+      } else if (data?.routinePrivacyStatus === "Friends only") {
+        if (viewStatus === true) {
+          return (
+            <RoutinePlaceHolder
+              routines={routines}
+              navigate={navigate}
+              custom_user={custom_user}
+              uid={uid}
+              hasNextPage={hasNextPage}
+              isFetchingNextPage={isFetchingNextPage}
+              fetchNextPage={fetchNextPage}
+              isInstructor={isInstructor}
+              accountData={data}
+              refetch={refetch}
+              openSnackbar={openSnackbar}
+            />
+          );
+        } else {
+          return (
+            <div className="flex flex-col justify-center items-center mt-40">
+              <span className="text-center font-semibold text-gray-400 mt-2 text-xl">
+                To view this user's posts, you must be on their friends list.
+              </span>
             </div>
           );
         }
@@ -126,6 +156,8 @@ export default function RoutineScreen({
             fetchNextPage={fetchNextPage}
             isInstructor={isInstructor}
             accountData={data}
+            refetch={refetch}
+            openSnackbar={openSnackbar}
           />
         );
       } else {

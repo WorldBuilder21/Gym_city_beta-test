@@ -9,6 +9,7 @@ import {
   useQueryClient,
 } from "@tanstack/react-query";
 import {
+  checkIfUserisBlocked,
   createComment,
   handlePaginateComments,
 } from "../../../../Services/firebase";
@@ -20,6 +21,7 @@ export default function CommentDialogBox({
   Fragment,
   handleClose,
   //   comments,
+  refetchBlockedStatus,
   uid,
   docId,
 }) {
@@ -30,7 +32,7 @@ export default function CommentDialogBox({
   // const uid = custom_user.uid;
 
   console.log("comments uids:", uid);
-  console.log('docId:', docId)
+  console.log("docId:", docId);
 
   const {
     status,
@@ -46,8 +48,8 @@ export default function CommentDialogBox({
       handlePaginateComments(docId, uid, pageParam.pageParam),
     getNextPageParam: (lastPage) => lastPage.nextPage,
   });
-  
-  console.log('paginate error:',error)
+
+  console.log("paginate error:", error);
 
   console.log(data);
 
@@ -65,12 +67,18 @@ export default function CommentDialogBox({
   const onSubmit = async (e) => {
     e.preventDefault();
 
-    createCommentMutation.mutate({
-      uid,
-      docId,
-      comment,
-      senderId: custom_user.uid
-    });
+    const isblocked = await checkIfUserisBlocked(uid, custom_user.uid);
+
+    if (isblocked) {
+      refetchBlockedStatus();
+    } else {
+      createCommentMutation.mutate({
+        uid,
+        docId,
+        comment,
+        senderId: custom_user.uid,
+      });
+    }
 
     setComment("");
   };
@@ -175,6 +183,7 @@ export default function CommentDialogBox({
                                 item={data}
                                 uid={data?.uid}
                                 docId={docId}
+                                comment_id={data?.docId}
                               />
                             </div>
                           ))}

@@ -10,7 +10,12 @@ import CommentDialogBox from "./CommentDialogBox";
 import LikeButton from "./LikeButton";
 import { getCommentCount } from "../../../../Services/firebase";
 
-export default function CommentSection({ docId, uid, commentInput }) {
+export default function CommentSection({
+  docId,
+  uid,
+  commentInput,
+  refetchBlockedStatus,
+}) {
   const [openModal, setOpenModal] = useState(false);
   const { status, data: comments } = useQuery(
     {
@@ -96,6 +101,7 @@ export default function CommentSection({ docId, uid, commentInput }) {
                         docId={docId}
                         uid={item?.data()?.uid}
                         key={index}
+                        comment_id={item?.data()?.docId}
                       />
                     ))}
                 </div>
@@ -116,6 +122,7 @@ export default function CommentSection({ docId, uid, commentInput }) {
                         uid={uid}
                         // comments={comments}
                         handleClose={closeModal}
+                        refetchBlockedStatus={refetchBlockedStatus}
                         docId={docId}
                       />
                     </>
@@ -131,6 +138,7 @@ export default function CommentSection({ docId, uid, commentInput }) {
         docId={docId}
         userId={uid}
         commentInput={commentInput}
+        refetchBlockedStatus={refetchBlockedStatus}
       />
     </>
   );

@@ -33,6 +33,7 @@ import ViewInstructorScreen from "./Screens/Instructors/ViewInstructorScreen";
 import PrivacyScreen from "./Screens/Settings/Privacy/PrivacyScreen";
 import ViewBlockedUsers from "./Screens/Home/Blocked/ViewBlockedUsers";
 import ReviewScreen from "./Screens/Home/Reviews/ReviewScreen";
+import ActivityScreen from "./Screens/Dashboard/ActivityScreen/ActivityScreen";
 
 function App() {
   return (
@@ -57,7 +58,20 @@ function App() {
                 <Route path="dashboard" element={<DashboardScreen />} />
               </Route>
             </Route>
+            <Route
+              path="/profile/routineDraft"
+              element={<AddWorkoutRoutine />}
+            />
+
+            <Route element={<GymProtectedRouter />}>
+              <Route path="/dashboard/viewActivity" element={<ActivityScreen />} />
+            </Route>
+
             <Route path="/profile/reviews" element={<ReviewScreen />} />
+            <Route
+              path="/requests/viewRoutine"
+              element={<ViewWorkoutRoutine />}
+            />
             <Route
               path="/settings/viewProfile/editProfile"
               element={<EditProfileScreen />}
@@ -68,6 +82,7 @@ function App() {
               path="/settings/viewProfile"
               element={<ViewProfieScreen />}
             />
+
             <Route
               path="/settings/viewProfile/weightTracker"
               element={<WeightTrackerScreen />}
@@ -79,6 +94,7 @@ function App() {
             />
 
             <Route path="/profile/friends" element={<ViewFriendsScreen />} />
+            <Route path="/profile/draftRoutine" element={""} />
             <Route path="/profile/members" element={<MemberScreen />} />
             <Route
               path="/profile/instructors"

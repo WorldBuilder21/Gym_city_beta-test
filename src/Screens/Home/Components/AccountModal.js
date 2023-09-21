@@ -32,6 +32,7 @@ export default function AccountModal({
   isInstructor,
   handleRequest,
 }) {
+  console.log("refetch:", refetch);
   const userdoc = useSelector((state) => state.userdoc.userdoc);
   const custom_user = useSelector((state) => state.user.user);
   const navigate = useNavigate();
@@ -99,9 +100,7 @@ export default function AccountModal({
     setUnblockModal(false);
   };
 
-  const taskHandler = () => {
-    blockUser(custom_user.uid, uid);
-    refetch();
+  const taskHandler = async () => {
     openSnackbar({
       message: `You have blocked ${
         userdata?.usertype === "Gym" ? userdata?.gymname : userdata?.fullname
@@ -109,13 +108,12 @@ export default function AccountModal({
       severity: "error",
     });
     handleClose();
+    await blockUser(custom_user.uid, uid).then(() => {
+      window.location.reload();
+    });
   };
 
-  console.log();
-
-  const handleUnblock = () => {
-    unblockUser(custom_user.uid, uid);
-    refetch();
+  const handleUnblock = async () => {
     openSnackbar({
       message: `You have unblocked ${
         userdata?.usertype === "Gym" ? userdata?.gymname : userdata?.fullname
@@ -123,6 +121,9 @@ export default function AccountModal({
     });
     handleCloseModal();
     handleClose();
+    await unblockUser(custom_user.uid, uid).then(() => {
+      window.location.reload();
+    });
   };
 
   console.log("usertype: ", userdoc.usertype);
@@ -134,7 +135,19 @@ export default function AccountModal({
         return "Become A member";
       }
     } else {
-      return "Send friend request";
+      if (
+        userdata?.usertype === "User" &&
+        (userdoc?.usertype === "User" || userdoc?.usertype === "Instructor")
+      ) {
+        return "Send friend request";
+      }
+      if (userdata?.usertype === "Instructor") {
+        if (userdoc?.usertype === "Gym") {
+          return "Send employment request";
+        } else {
+          return "Send friend request";
+        }
+      }
     }
   };
 
@@ -184,18 +197,34 @@ export default function AccountModal({
   };
 
   const handleDisabled = () => {
-    if (userdoc?.usertype === "Instructor") {
-      if (userdata?.hiringStatus === "hiring") {
+    if (userdata?.usertype === "Gym" && userdoc.usertype === "User") {
+      return false;
+    }
+    if (userdata?.usertype === "Gym" && userdata?.hiringStatus === "Hiring") {
+      if (userdoc.usertype === "Instructor") {
         return false;
       } else {
         return true;
       }
-    } else {
+    } else if (userdata?.usertype === "User") {
       return false;
+    } else {
+      return true;
     }
+
+    // if (userdoc?.usertype === "Instructor") {
+    //   if (userdata?.hiringStatus === "hiring" && userdata?.usertype === "Gym") {
+    //     return false;
+    //   } else {
+    //     return true;
+    //   }
+    // } else {
+    //   return false;
+    // }
   };
 
   console.log("hiringStatus:", userdata);
+  console.log('usertype: ', usertype)
 
   return (
     <>
@@ -336,7 +365,24 @@ export default function AccountModal({
                           View friends
                         </button>
 
-                        {custom_user.uid === uid ? (
+                        {/* Gyms sending employment request to instructors */}
+                        {userdoc?.usertype === "Gym" ? (
+                          <>
+                            <button
+                              disabled={false}
+                              onClick={() => {
+                                handleRequest();
+                                handleClose();
+                              }}
+                              className="disabled:opacity-40 disabled:hover:bg-inherit disabled:hover:text-inherit flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700"
+                            >
+                              {displayMessage()}
+                            </button>
+                          </>
+                        ) : (
+                          <></>
+                        )}
+                        {custom_user.uid === uid && userdata?.usertype ==='Instructor' ? (
                           <button className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700 ">
                             View clients
                           </button>
@@ -381,31 +427,12 @@ export default function AccountModal({
                           ) : (
                             <>
                               <button
-                                // disabled={() => {
-                                //   if (userdata?.usertype === "Gym") {
-                                //     if (userdoc.usertype === "Instructor") {
-                                //       if (userdata?.hiringStatus === "Hiring") {
-                                //         return false;
-                                //       }
-                                //     }
-                                //   }
-                                // }}
-                                // disabled={
-                                //   userdoc.usertype === "Instructor" &&
-                                //   userdata?.hiringStatus !== "Hiring"
-                                // }
-                                disabled={
-                                  handleDisabled()
-                                  // userdata?.hiringStatus === "hiring"
-                                  //   ? true
-                                  //   : false;
-                                }
+                                disabled={handleDisabled()}
                                 onClick={() => {
                                   if (userdata?.usertype === "Gym") {
                                     handleOpenSubscriptionModal();
                                   } else {
                                     handleFriendRequest();
-                                    // for sending friend request
                                   }
                                 }}
                                 className="disabled:opacity-40 disabled:hover:bg-inherit disabled:hover:text-inherit flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700"
@@ -418,17 +445,6 @@ export default function AccountModal({
                       ) : (
                         <></>
                       ))}
-
-                    {/* {custom_user.uid !== uid &&
-                    !isblocker ? <>
-                    <button onClick={handleOpen} className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg text-white bg-red-500 hover:bg-red-600">
-                      Block user
-                    </button>
-                    <CustomDialogBox Fragment={Fragment} isOpen={openModal} handleClose={handleCloseModal} handleTask={taskHandler} message={'Are you sure you want to block this user?'} />
-                  </> : <>
-                    <button onClick={handleOpenUnblockModal} className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg text-white bg-red-500 hover:bg-red-600"> Unblock user</button>
-                    <CustomDialogBox Fragment={Fragment} isOpen={unblockModal} handleClose={handleCloseUnblockModal} handleTask={handleUnblock} message={'Are you sure you want to unblock this user?'} />
-                  </>} */}
                     {displayBlockButton()}
                   </div>
                 </Dialog.Panel>

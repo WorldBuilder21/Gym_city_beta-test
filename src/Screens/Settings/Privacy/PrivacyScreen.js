@@ -162,7 +162,7 @@ export default function PrivacyScreen() {
                 >
                   <div className="items-center justify-center flex">
                     <span className="font-semibold ml-4">
-                      {data.postPrivacyStatus}
+                      {data?.postPrivacyStatus}
                     </span>
                   </div>
                   <ArrowForwardIcon />
@@ -172,7 +172,7 @@ export default function PrivacyScreen() {
                   type={"Posts"}
                   isOpen={openPostModal}
                   handleClose={handleClosePostModal}
-                  oldStatus={data.postPrivacyStatus}
+                  oldStatus={data?.postPrivacyStatus}
                   openSnackbar={openSnackbar}
                   refetch={refetch}
                 />
@@ -187,7 +187,7 @@ export default function PrivacyScreen() {
                 >
                   <div className="items-center justify-center flex">
                     <span className="font-semibold ml-4">
-                      {data.routinePrivacyStatus}
+                      {data?.routinePrivacyStatus}
                     </span>
                   </div>
                   <ArrowForwardIcon />
@@ -199,7 +199,7 @@ export default function PrivacyScreen() {
                   handleClose={handleCloseRoutineModal}
                   openSnackbar={openSnackbar}
                   refetch={refetch}
-                  oldStatus={data.routinePrivacyStatus}
+                  oldStatus={data?.routinePrivacyStatus}
                 />
               </div>
             </div>
@@ -228,7 +228,7 @@ export default function PrivacyScreen() {
                     handleClose={handleCloseInstructorModal}
                     openSnackbar={openSnackbar}
                     refetch={refetch}
-                    oldStatus={data.hiringStatus}
+                    oldStatus={data?.hiringStatus}
                   />
                 </div>
               </div>
@@ -238,7 +238,7 @@ export default function PrivacyScreen() {
               <span className="font-semibold text-md">Inbox privacy:</span>
               <div className="mt-2 space-y-3">
                 <button
-                  onClick={handleOpenPostModal}
+                  onClick={handleOpenInboxModal}
                   className="flex w-full hover:bg-gray-100 border border-gray-300 p-4 rounded-lg shadow-md items-center justify-between"
                 >
                   <div className="items-center justify-center flex">
@@ -248,15 +248,8 @@ export default function PrivacyScreen() {
                   </div>
                   <ArrowForwardIcon />
                 </button>
-                {/* <PrivacyDialogBox
-                  Fragment={Fragment}
-                  type={"Posts"}
-                  isOpen={openPostModal}
-                  handleClose={handleClosePostModal}
-                  oldStatus={data.postPrivacyStatus}
-                  openSnackbar={openSnackbar}
-                  refetch={refetch}
-                /> */}
+                <InboxPrivacyDIalogBox ScreenFragment={Fragment} isOpen={openInboxModal} handleClose={handleCloseInboxModal} type={userdoc.usertype} openSnackbar={openSnackbar} refetch={refetch} oldStatus={data?.inboxPrivacyStatus} />
+    
               </div>
             </div>
           </div>

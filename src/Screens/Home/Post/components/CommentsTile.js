@@ -7,10 +7,10 @@ import formatDistance from "date-fns/formatDistance";
 import { deleteDoc, doc } from "firebase/firestore";
 import { db } from "../../../../firebase";
 
-export default function CommentsTile({ docId, item, uid }) {
+export default function CommentsTile({ docId, item, uid, comment_id }) {
   const { status, data: userData } = useQuery(
     {
-      queryKey: ["commentData"],
+      queryKey: ["commentData", comment_id],
       queryFn: () => getUserDataUid(uid),
       enabled: docId != null,
     },
@@ -48,12 +48,12 @@ export default function CommentsTile({ docId, item, uid }) {
   return (
     <div className="flex w-full justify-between">
       <div className="flex justify-center items-start">
-        <Avatar src={userData.photoUrl} />
+        <Avatar src={userData?.photoUrl} />
         <div className="flex flex-col ml-2 justify-center items-start">
           <p className="font-semibold">
             {userData?.usertype === "Gym"
               ? userData?.gymname
-              : userData?.displayName}
+              : userData?.fullname}
           </p>
           <p>
             {deleteCommentMutation.status === "loading"

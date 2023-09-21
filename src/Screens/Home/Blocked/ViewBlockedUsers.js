@@ -1,6 +1,6 @@
 import React from "react";
 import ComponentSkeleton from "../../Components/ComponentSkeleton";
-import { viewBlockedUsers } from "../../../Services/firebase";
+import { viewBlockedUsers, getBlockedCount } from "../../../Services/firebase";
 import { useSelector } from "react-redux";
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import ErrorMessage from "../../Components/ErrorMessage";
@@ -11,6 +11,7 @@ import { useNavigate } from "react-router";
 
 export default function ViewBlockedUsers() {
   const custom_user = useSelector((state) => state.user.user);
+
 
   const {
     status,
@@ -28,6 +29,21 @@ export default function ViewBlockedUsers() {
     },
     { enabled: false }
   );
+
+  const {
+    status: count_status,
+    data: count,
+    refetch: refetch_count,
+  } = useQuery(
+    {
+      queryKey: ["count_blocked_user"],
+      queryFn: () => getBlockedCount(custom_user.uid),
+    },
+    { enabled: false }
+  );
+
+  const blocked_user_count =
+    count_status === "loading" ? 0 : count_status === "error" ? 0 : count;
 
   const navigate = useNavigate();
   return (
@@ -77,8 +93,14 @@ export default function ViewBlockedUsers() {
         ) : (
           <div>
             <div className="flex mx-2 flex-col justify-center items-center mt-10">
+              <div className="w-full max-w-lg">
+                <span className="font-semibold text-2xl">
+                  Blocked Users · {blocked_user_count}
+                </span>
+                <div className="w-full h-0.5 mt-2 mb-5 bg-gray-100 rounded-full" />
+              </div>
               {data?.pages.map((page, index) =>
-                page?.blockedUsers.length === 0 ? (
+                page?.blockedUsers?.length === 0 ? (
                   <div
                     key={index}
                     className="flex flex-col justify-center items-center h-screen text-gray-500"
@@ -90,8 +112,14 @@ export default function ViewBlockedUsers() {
                   </div>
                 ) : (
                   <div key={index} className="max-w-lg w-full">
-                    {page?.blockedUsers.map((user, index) => (
-                      <BlockedUsersCard key={index} />
+                    {page?.blockedUsers?.map((user, index) => (
+                      <BlockedUsersCard
+                        user={user}
+                        key={index}
+                        refetch={refetch}
+                        refetch_count={refetch_count}
+                        docId={user?.blockedId}
+                      />
                     ))}
                   </div>
                 )

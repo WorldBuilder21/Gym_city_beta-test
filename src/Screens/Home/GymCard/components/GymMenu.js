@@ -16,6 +16,7 @@ export default function GymMenu({
   const [openBlockModal, setBlockModal] = useState(false);
 
   const leaveGymFunc = async () => {
+    // add a leave record
     await leaveGym(uid, docId);
     refetch();
   };
@@ -97,7 +98,7 @@ export default function GymMenu({
                     className={`hover:bg-gray-100 group flex w-full font-semibold items-center rounded-md px-2 py-2 text-sm text-rose-500`}
                   >
                     <BlockIcon />
-                    <p className="ml-3">Block member</p>
+                    <p className="ml-3">Block gym</p>
                   </button>
                   {/* <CustomDialogBox /> */}
                 </>

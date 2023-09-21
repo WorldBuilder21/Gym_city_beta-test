@@ -312,6 +312,16 @@ export const getUserDataUid = async (userId) => {
   return docSnap.data();
 };
 
+export const getMaxMembershipLength = async (userId) => {
+  const result = await getUserDataUid(userId);
+  if (result?.memberships?.length === 5) {
+    // maximum gyms a user can join is 5
+    return true;
+  } else {
+    return false;
+  }
+};
+
 export const getPostData = async (userid, postId) => {
   const docRef = doc(db, "users", userid, "posts", postId);
   const docSnap = await getDoc(docRef);
@@ -349,7 +359,7 @@ export const getPostsDocs = async (uid, nextPageParam = undefined) => {
   return { posts, nextPage };
 };
 
-export const createComment = async ({ uid, docId, comment, senderId  }) => {
+export const createComment = async ({ uid, docId, comment, senderId }) => {
   try {
     const collectionRef = collection(
       db,
@@ -409,12 +419,11 @@ export const isLiked = async (docId, uid) => {
 };
 
 export const getFiveRoutines = async (uid) => {
-  const routineRef = collection(db, 'users', uid, 'routines')
-  const q = query(routineRef, orderBy('ts', 'desc'), limit(15))
-  const snapshots = await getDocs(q)
+  const routineRef = collection(db, "users", uid, "routines");
+  const q = query(routineRef, orderBy("ts", "desc"), limit(15));
+  const snapshots = await getDocs(q);
   return snapshots;
-  
-}
+};
 
 export const getRoutineDocs = async (uid, nextPageParam = undefined) => {
   const routineRef = collection(db, "users", uid, "routines");
@@ -457,14 +466,15 @@ export const handleToggleLiked = async ({
   setToggledLiked,
   setToggleCount,
   toggleLiked,
+  likersId,
 }) => {
   try {
     setToggledLiked((toggleLiked) => !toggleLiked);
     const batch = writeBatch(db);
-    const docRef = doc(db, "users", uid, "posts", docId, "likes", uid);
+    const docRef = doc(db, "users", uid, "posts", docId, "likes", likersId);
 
     if (!toggleLiked) {
-      batch.set(docRef, { uid });
+      batch.set(docRef, { likersId });
 
       setToggleCount((toggleCount) => toggleCount + 1);
     } else {
@@ -520,9 +530,9 @@ export const handlePaginateComments = async (
 
   const comments = snapshot.docs.map((doc) => ({ id: doc.id, ...doc.data() }));
 
-  console.log('commentsSnapshot:', comments)
-  console.log('snapchat_docId:',docId)
-  console.log('snapshot_uid:', uid)
+  console.log("commentsSnapshot:", comments);
+  console.log("snapchat_docId:", docId);
+  console.log("snapshot_uid:", uid);
 
   const hasNextPage = comments.length === 15;
 
@@ -552,10 +562,63 @@ export const queryData = async (uid, month, year) => {
     orderBy("week", "asc")
   );
   const querySnapshot = await getDocs(q);
-  return querySnapshot.docs.map((doc) => ({
+  return querySnapshot?.docs?.map((doc) => ({
+    id: doc.id,
+    ...doc?.data(),
+  }));
+};
+
+export const recentActivities = async (uid) => {
+  const activityRef = collection(db, "users", uid, "activities");
+  const q = query(activityRef, orderBy("ts"), limit(3));
+  const snapshots = await getDocs(q);
+  return snapshots;
+};
+
+export const pickActivity = async (
+  uid,
+  month,
+  year,
+  nextPageParam = undefined
+) => {
+  const activityRef = collection(db, "users", uid, "activities");
+
+  let q = query(
+    activityRef,
+    where("month", "==", month),
+    where("year", "==", year),
+    orderBy("ts"),
+    limit(15)
+  );
+
+  if (nextPageParam !== undefined) {
+    q = query(
+      activityRef,
+      where("month", "==", month),
+      where("year", "==", year),
+      orderBy("ts"),
+      startAfter(nextPageParam),
+      limit(15)
+    );
+  }
+
+  const querySnapshot = await getDocs(q);
+
+  const activities = querySnapshot.docs.map((doc) => ({
     id: doc.id,
     ...doc.data(),
   }));
+
+  const hasNextPage = activities.length === 15;
+
+  const lastsnapshot = querySnapshot.docs[querySnapshot.docs.length - 1];
+
+  const nextPage = hasNextPage ? lastsnapshot : undefined;
+
+  return {
+    activities,
+    nextPage,
+  };
 };
 
 export const addRecordEntry = async ({
@@ -1020,10 +1083,24 @@ export const declineRequest = async (uid, docId) => {
   await deleteDoc(docRef);
 };
 
+export const addActivity = async (uid, docId, type) => {
+  const date = new Date();
+  const activityRef = collection(db, "users", uid, "activities");
+  const documentRef = await addDoc(activityRef, {
+    ts: serverTimestamp(),
+    senderId: docId,
+    uid: uid,
+    type: type,
+    month: date.getMonth(),
+    year: date.getFullYear(),
+  });
+
+  await updateDoc(documentRef, {
+    docId: documentRef.id,
+  });
+};
+
 export const acceptRequest = async (uid, docId, requestType) => {
-  console.log(requestType);
-  console.log(docId);
-  console.log(uid);
   // for friends requests u have to add the document to in the friends collection of both the users
   if (requestType === "friend") {
     const docRef = doc(db, "users", uid, "friends", docId);
@@ -1039,19 +1116,26 @@ export const acceptRequest = async (uid, docId, requestType) => {
     const requestRef = doc(db, "users", uid, "requests", docId);
     await deleteDoc(requestRef);
   } else if (requestType === "Membership") {
+    // added to the gym, for record, adding members to the gym
     const docRef = doc(db, "users", uid, "members", docId);
     const userRef = doc(db, "users", docId);
+
     await setDoc(docRef, {
       ts: serverTimestamp(),
       memberId: docId,
       type: "member",
     });
+
     await updateDoc(userRef, {
       memberships: arrayUnion(uid),
     });
+
     const requestRef = doc(db, "users", uid, "requests", docId);
     await deleteDoc(requestRef);
+
+    addActivity(uid, docId, "MemberAdded");
   } else if (requestType === "Employment") {
+    // instructors has sent an employment request to gym, adding instructors to the gym.
     const docRef = doc(db, "users", uid, "instructors", docId);
     const userRef = doc(db, "users", docId);
     await setDoc(docRef, {
@@ -1065,7 +1149,38 @@ export const acceptRequest = async (uid, docId, requestType) => {
 
     const requestRef = doc(db, "users", uid, "requests", docId);
     await deleteDoc(requestRef);
+
+    addActivity(uid, docId, "InstructorAdded");
+  } else if (requestType === "Instructor_Employment") {
+    // gym sent an employment request to the instructor
+    const docRef = doc(db, "users", docId, "instructors", uid);
+    const userRef = doc(db, "users", uid);
+
+    await setDoc(docRef, {
+      ts: serverTimestamp(),
+      instructorId: uid,
+    });
+
+    await updateDoc(userRef, {
+      memberships: arrayUnion(docId),
+    });
+
+    const requestRef = doc(db, "users", uid, "requests", docId);
+    await deleteDoc(requestRef);
+
+    addActivity(docId, uid, "InstructorAdded");
   }
+  // else if (requestType === 'PostDraft'){
+  //   // add it to the gym's post
+  //   const requestRef = doc(db, 'users', uid, 'requests', docId)
+  //   const postRef = collection(db, 'users', uid, 'posts')
+
+  //   await addDoc(postRef, {
+  //   })
+
+  // }else if(requestType === 'RoutineDraft'){
+  //   // add it to the gym's routine
+  // }
 };
 
 export const sendRoutineRequest = async ({ uid, docId, type, data }) => {
@@ -1208,6 +1323,18 @@ export const blockUser = async (uid, docId) => {
     blockerId: uid,
   });
 };
+
+export const getBlockedCount = async (uid) => {
+  const docRef = collection(db, "users", uid, "blocked");
+  const blockedCount = await getCountFromServer(docRef);
+  return blockedCount.data().count;
+};
+
+// export const getMemberCount = async (uid) => {
+//   const memberRef = collection(db, "users", uid, "members");
+//   const memberCount = await getCountFromServer(memberRef);
+//   return memberCount.data().count;
+// };
 
 export const blockInstructor = async (uid, docId) => {
   await removeInstructor(uid, docId);

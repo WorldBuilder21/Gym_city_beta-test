@@ -5,8 +5,10 @@ import {
   isLiked,
 } from "../../../../Services/firebase";
 import { useMutation } from "@tanstack/react-query";
+import { useSelector } from "react-redux";
 
 export default function LikeButton({ uid, docId }) {
+  const custom_user = useSelector((state) => state.user.user);
   const likeMutation = useMutation({
     mutationFn: handleToggleLiked,
   });
@@ -36,6 +38,7 @@ export default function LikeButton({ uid, docId }) {
       setToggledLiked,
       setToggleCount,
       toggleLiked,
+      likersId: custom_user.uid,
     });
   };
 

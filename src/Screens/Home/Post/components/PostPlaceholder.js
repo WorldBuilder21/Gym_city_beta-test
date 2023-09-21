@@ -20,11 +20,6 @@ export default function PostPlaceholder({
   isInstructor,
   accountData,
 }) {
-
-  const sendPostRequest = () =>{
-
-  }
-
   return posts?.pages?.map((page, index) =>
     page?.posts?.length === 0 ? (
       custom_user.uid === uid ? (
@@ -58,12 +53,47 @@ export default function PostPlaceholder({
               openSnackbar={openSnackbar}
               refetch={refetch}
               isInstructor={false}
+              draft={false}
+              gymId={""}
             />
           </div>
         </div>
-      ) : accountData?.usertype === 'Gym' && isInstructor ? <div>
-        <span>No post have been created yet</span>
-      </div> :(
+      ) : accountData?.usertype === "Gym" && isInstructor ? (
+        <div
+          key={index}
+          className="flex flex-col justify-center items-center mt-40 text-gray-400"
+        >
+          {/* Instructor */}
+          <AddPhotoAlternateIcon sx={{ fontSize: 100 }} />
+          <span className="text-center font-semibold text-gray-400 mt-2 text-xl">
+            No posts have been created yet
+          </span>
+          <span className="text-center text-gray-500 text-md ">
+            A request will be sent to the gym's account for approval of your created
+            post.
+          </span>
+          <div className="mt-2">
+            <button
+              onClick={() => {
+                openPostModal();
+              }}
+              className="text-white bg-blue-700 hover:bg-blue-800 font-medium rounded-lg text-sm px-10 py-2.5 text-center"
+            >
+              Create post
+            </button>
+            <CreatePostDialogBox
+              Fragment={Fragment}
+              isOpen={openModal}
+              handleClose={closeModal}
+              openSnackbar={openSnackbar}
+              refetch={refetch}
+              isInstructor={false}
+              draft={true}
+              gymId={accountData?.docId}
+            />
+          </div>
+        </div>
+      ) : (
         <div
           key={index}
           className="flex flex-col justify-center items-center mt-40 text-gray-400"
@@ -93,6 +123,8 @@ export default function PostPlaceholder({
               openSnackbar={openSnackbar}
               refetch={refetch}
               isInstructor={false}
+              draft={false}
+              gymId={""}
             />
           </div>
         ) : (

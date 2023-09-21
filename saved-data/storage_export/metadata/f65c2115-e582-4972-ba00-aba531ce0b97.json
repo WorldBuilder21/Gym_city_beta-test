@@ -1,0 +1,19 @@
+{
+  "name": "post/1693973687875undefined",
+  "bucket": "gym-city-test.appspot.com",
+  "metageneration": 1,
+  "generation": 1693973688216,
+  "contentType": "image/jpeg",
+  "storageClass": "STANDARD",
+  "contentDisposition": "inline",
+  "downloadTokens": [
+    "0ffb5c46-ca38-465f-a454-33f1879e06b0"
+  ],
+  "etag": "DzoQP1TB52IKXoSQy5KJgFZDPFU",
+  "customMetadata": {},
+  "timeCreated": "2023-09-06T04:14:48.217Z",
+  "updated": "2023-09-06T04:14:48.217Z",
+  "size": 86204,
+  "md5Hash": "FPDkuPAB6RDJCc9WdVN0ZQ==",
+  "crc32c": "2224476326"
+}

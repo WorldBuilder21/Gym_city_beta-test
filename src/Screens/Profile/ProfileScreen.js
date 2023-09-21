@@ -12,10 +12,14 @@ import PostScreen from "../Home/Post/PostScreen";
 // import RoutineScreen from "../Home/Routine/RoutineScreen";
 import RoutineScreen from "../Home/Routine/RoutineScreen";
 import { useNavigate, useParams } from "react-router";
-import { checkIfInstructor, getUserDataUid } from "../../Services/firebase";
+import {
+  checkIfInstructor,
+  getMaxMembershipLength,
+  getUserDataUid,
+} from "../../Services/firebase";
 import { useQuery } from "@tanstack/react-query";
 import ErrorMessage from "../Components/ErrorMessage";
-import GroupIcon from "@mui/icons-material/Group";
+import MemberChip from "./components/MemberChip";
 import { Snackbar } from "@mui/material";
 import {
   checkIfUserisBlocked,
@@ -26,6 +30,9 @@ import BlockIcon from "@mui/icons-material/Block";
 import MuiAlert from "@mui/material/Alert";
 import { checkIfRequest, sendUserRequest } from "../../Services/firebase";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import FriendChip from "./components/FriendChip";
+import GymChip from "./components/GymChip";
+import RatingString from "./components/RatingString";
 
 const Alert = React.forwardRef(function Alert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
@@ -35,12 +42,8 @@ export default function ProfileScreen() {
   let { id } = useParams();
   const navigate = useNavigate();
 
-  console.log(id);
-
   const custom_user = useSelector((state) => state.user.user);
   const user_doc = useSelector((state) => state.userdoc.userdoc);
-
-  console.log("user_doc:", user_doc);
 
   const [blocked, setBlocked] = useState(false);
   const [blocker, setBlocker] = useState(false);
@@ -91,6 +94,11 @@ export default function ProfileScreen() {
           setIsInstructor(result);
           setViewStatus(result);
         });
+      } else if (user_doc?.usertype === "Gym") {
+        checkIfInstructor(custom_user.uid, id).then((result) => {
+          setIsInstructor(result);
+          setViewStatus(result);
+        });
       } else {
         checkifFriendOrMember(id, custom_user.uid, userdoc?.usertype).then(
           (result) => {
@@ -118,9 +126,7 @@ export default function ProfileScreen() {
         }
       });
     }
-  }, [custom_user.uid, id, userdoc?.usertype]);
-
-  console.log("userdoc:", userdoc);
+  }, [custom_user.uid, id, user_doc?.usertype, userdoc?.usertype]);
 
   // check blocked status of user viewing
 
@@ -146,11 +152,18 @@ export default function ProfileScreen() {
     if (id !== undefined) {
       const request_check = await checkIfRequest(id, custom_user.uid);
       if (request_check === false) {
-        
         if (user_doc.usertype === "Instructor") {
+          // add a condition to check if the maximum membership length has been exceeded
+          const exceeded = await getMaxMembershipLength(custom_user.uid);
           if (isInstructor === true) {
             openSnackbar({
               message: "You are already an Instructor in this gym.",
+            });
+          } else if (exceeded === true) {
+            openSnackbar({
+              message:
+                "but you have exceeded the maximum membership length, which is limited to a maximum of 5",
+              severity: "error",
             });
           } else {
             try {
@@ -170,9 +183,42 @@ export default function ProfileScreen() {
               });
             }
           }
+        } else if (user_doc.usertype === "Gym") {
+          // when gyms sending an employment request to instructors
+          if (isInstructor === true) {
+            openSnackbar({
+              message: "This instructor is already an Instructor at your gym.",
+              severity: "error",
+            });
+          } else {
+            try {
+              sendUserRequest(
+                id,
+                custom_user.uid,
+                "Instructor_Employment",
+                userdoc?.usertype
+              );
+              openSnackbar({
+                message: "Your employment request has been sent.",
+              });
+            } catch (error) {
+              openSnackbar({
+                message: "An error occurred while sending your requests.",
+                severity: "error",
+              });
+            }
+          }
         } else {
+          // add condition to check if membership length has been exceeded.
+          const exceeded = await getMaxMembershipLength(custom_user.uid);
           if (viewStatus === true) {
             openSnackbar({ message: "You are already a member in the gym." });
+          } else if (exceeded === true) {
+            openSnackbar({
+              message:
+                "but you have exceeded the maximum membership length, which is limited to a maximum of 5",
+              severity: "error",
+            });
           } else {
             try {
               sendUserRequest(
@@ -201,12 +247,6 @@ export default function ProfileScreen() {
     }
   };
 
-  // const displayUserBlockedTag = () => {
-  //   if(blocked){
-  //     if(id ==== cus)
-  //   }
-  // }
-
   function TabPanel(props) {
     const { children, value, index, ...other } = props;
 
@@ -226,6 +266,8 @@ export default function ProfileScreen() {
       </div>
     );
   }
+
+  console.log("usertype: ", userdoc?.usertype);
 
   return (
     <div>
@@ -308,11 +350,11 @@ export default function ProfileScreen() {
         ) : (
           <div className="flex flex-col ml-2 items-start">
             <div className="mt-5 w-full px-2 max-w-lg">
-              <div className="flex items-center justify-between">
+              <div className="flex mb-5 items-center justify-between">
                 <div className="flex">
                   <Avatar
                     sx={{ width: 110, height: 110 }}
-                    src={blocked ? "" : userdoc?.photoUrl}
+                    src={blocked || blocker ? "" : userdoc?.photoUrl}
                   />
                   <div className="flex flex-col ml-3 justify-center space-y-2">
                     <div>
@@ -340,7 +382,7 @@ export default function ProfileScreen() {
                     Fragment={Fragment}
                     isOpen={isOpen}
                     uid={id ? id : custom_user.uid}
-                    usertype={id ? userdoc?.usertype : user_doc.usertype}
+                    usertype={userdoc?.usertype}
                     handleClose={handleClose}
                     viewStatus={viewStatus}
                     isblocked={blocked}
@@ -367,60 +409,67 @@ export default function ProfileScreen() {
                 <></>
               )}
 
-              {blocked ? <></> : <p className="mt-2">{userdoc?.bio}</p>}
-
-              {userdoc?.usertype === "Instructor" ? (
-                <div className="flex mt-2 flex-row space-x-4">
-                  <div className="flex font-semibold flex-row items-center">
-                    Client rating: 0
-                    <StarIcon sx={{ color: yellow[800], fontSize: 30 }} />
-                  </div>
-                  <div className="flex font-semibold flex-row items-center">
-                    Employer rating: 0
-                    <StarIcon sx={{ color: yellow[800], fontSize: 30 }} />
-                  </div>
-                </div>
-              ) : userdoc?.usertype === "Gym" ? (
-                <div className="flex mt-2 flex-row space-x-4">
-                  <div className="flex font-semibold flex-row items-center">
-                    Rating: 0
-                    <StarIcon sx={{ color: yellow[800], fontSize: 30 }} />
-                  </div>
-                  <div className="flex font-semibold flex-row items-center justify-center">
-                    Members: 0
-                  </div>
-                </div>
+              {blocked || blocker ? (
+                <></>
               ) : (
-                // this is for users
-                <div className="flex flex-row mt-2">
-                  <div className="rounded-md flex flex-row border px-4 justify-center items-center py-1.5 font-semibold border-black text-center text-sm">
-                    <GroupIcon />
-                    Friends: 0
-                  </div>
-                </div>
+                <p className="mt-2">{userdoc?.bio}</p>
+              )}
+
+              {blocked || blocker ? (
+                <></>
+              ) : (
+                <>
+                  {userdoc?.usertype === "Instructor" ? (
+                    <div className="flex mt-2 flex-row space-x-4">
+                      <div className="flex font-semibold flex-row items-center">
+                        Client rating: 0
+                        <StarIcon sx={{ color: yellow[800], fontSize: 30 }} />
+                      </div>
+                      <div className="flex font-semibold flex-row items-center">
+                        Employer rating: 0
+                        <StarIcon sx={{ color: yellow[800], fontSize: 30 }} />
+                      </div>
+                    </div>
+                  ) : userdoc?.usertype === "Gym" ? (
+                    <div className="flex mt-2 flex-row space-x-4">
+                      <RatingString id={userdoc?.docId} />
+                    
+                      <MemberChip
+                        type={"profile"}
+                        id={id ? id : custom_user.uid}
+                      />
+                    </div>
+                  ) : (
+                    <div className="flex flex-row mt-2">
+                      <FriendChip id={id ? id : custom_user.uid} />
+                    </div>
+                  )}
+                </>
               )}
             </div>
-            {userdoc?.usertype === "Gym" &&
-            userdoc?.hiringStatus === "Hiring" ? (
-              <div className="flex ml-2 mt-1">
-                <div className="rounded-md border px-6 py-1.5 font-semibold text-center text-sm flex justify-center items-center bg-green-500 text-white">
-                  <PersonAddIcon />
-                  <span className="ml-1">Hiring</span>
-                </div>
-              </div>
+
+            {blocked || blocker ? (
+              <> </>
             ) : (
-              <></>
-            )}
-            {userdoc?.usertype === "Instructor" && (
-              <div className="flex ml-2 mt-1 space-x-2">
-                <div className="rounded-md border px-4 py-1.5 font-semibold border-black text-center text-sm">
-                  Un employed
-                </div>
-                <div className="rounded-md flex flex-row border px-4 justify-center items-center py-1.5 font-semibold border-black text-center text-sm">
-                  <GroupIcon />
-                  Friends: 0
-                </div>
-              </div>
+              <>
+                {userdoc?.usertype === "Gym" &&
+                userdoc?.hiringStatus === "Hiring" ? (
+                  <div className="flex ml-2 mt-1">
+                    <div className="rounded-md border px-6 py-1.5 font-semibold text-center text-sm flex justify-center items-center bg-green-500 text-white">
+                      <PersonAddIcon />
+                      <span className="ml-1">Hiring</span>
+                    </div>
+                  </div>
+                ) : (
+                  <></>
+                )}
+                {userdoc?.usertype === "Instructor" && (
+                  <div className="flex ml-2 mt-1 space-x-2">
+                    <GymChip accountData={userdoc} />
+                    <FriendChip id={userdoc?.docId} />
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}
@@ -434,6 +483,16 @@ export default function ProfileScreen() {
               <BlockIcon sx={{ fontSize: 150 }} />
               <span className="mt-3 text-lg text-center font-semibold">
                 You have been blocked by this user.
+              </span>
+            </div>
+          </div>
+        ) : blocker ? (
+          <div className="mt-2">
+            <Box sx={{ borderBottom: 1, borderColor: "divider" }} />
+            <div className="flex text-red-500 flex-col justify-center items-center mt-40">
+              <BlockIcon sx={{ fontSize: 150 }} />
+              <span className="mt-3 text-lg text-center font-semibold">
+                You have blocked this user.
               </span>
             </div>
           </div>

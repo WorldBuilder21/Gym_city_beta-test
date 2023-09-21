@@ -61,7 +61,7 @@ export default function UserHomeScreen() {
       queryKey: ["userData"],
       queryFn: () => getUserDataUid(custom_user.uid),
     },
-    { enabled: false }
+    { enabled: custom_user.uid ? true: false }
   );
 
   const pictureDeletMutate = useMutation({

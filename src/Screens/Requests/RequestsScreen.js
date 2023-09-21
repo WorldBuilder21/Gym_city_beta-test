@@ -8,6 +8,7 @@ import RequestCard from "./Components/RequestCard";
 import { Snackbar } from "@mui/material";
 import ComponentSkeleton from "../Components/ComponentSkeleton";
 import MuiAlert from "@mui/material/Alert";
+import DraftPostDialogBox from "./Components/DraftPostDialogBox";
 
 const Alert = React.forwardRef(function Alert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
@@ -15,10 +16,6 @@ const Alert = React.forwardRef(function Alert(props, ref) {
 
 export default function RequestScreen() {
   const custom_user = useSelector((state) => state.user.user);
-  // const { status, data, refetch } = useQuery({
-  //   queryKey: ["requests"],
-  //   queryFn: () => getRequests(custom_user.uid),
-  // }, { enabled: false });
 
   const {
     status,
@@ -133,7 +130,8 @@ export default function RequestScreen() {
                       refetch={refetch}
                       refetchCount={refetch_count}
                       item={request}
-                      uid={request?.id}
+                      senderId={request?.senderId}
+                      docId={request?.id}
                       key={index}
                     />
                   ))}
