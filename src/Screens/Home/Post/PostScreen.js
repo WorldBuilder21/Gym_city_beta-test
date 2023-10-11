@@ -59,7 +59,6 @@ export default function PostScreen({
       queryFn: (pageParam) => getPostsDocs(uid, pageParam.pageParam),
       getNextPageParam: (lastpage) => lastpage.nextPage,
     },
-    { enabled: false }
   );
 
   // data about the user profile being view

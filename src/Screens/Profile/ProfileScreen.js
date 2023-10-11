@@ -33,6 +33,7 @@ import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import FriendChip from "./components/FriendChip";
 import GymChip from "./components/GymChip";
 import RatingString from "./components/RatingString";
+import Tooltip from "@mui/material/Tooltip";
 
 const Alert = React.forwardRef(function Alert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
@@ -348,33 +349,33 @@ export default function ProfileScreen() {
             />
           </div>
         ) : (
-          <div className="flex flex-col ml-2 items-start">
+          <div className="flex   flex-col ml-2 items-start">
             <div className="mt-5 w-full px-2 max-w-lg">
-              <div className="flex mb-5 items-center justify-between">
-                <div className="flex">
+              <div className="flex  mb-5 items-center justify-between">
+                <div className="flex truncate">
                   <Avatar
-                    sx={{ width: 110, height: 110 }}
+                    sx={{ width: 70, height: 70 }}
                     src={blocked || blocker ? "" : userdoc?.photoUrl}
                   />
-                  <div className="flex flex-col ml-3 justify-center space-y-2">
-                    <div>
-                      <p className="font-semibold text-md text-clip truncate">
+                  <span className="flex flex-col ml-3 justify-center space-y-2 text-ellipsis overflow-hidden">
+                    <div className="truncate ">
+                      <p className="font-semibold truncate block text-md md:text-lg ">
                         {userdoc?.usertype !== "Gym"
                           ? userdoc?.fullname
                           : userdoc?.gymname}
                       </p>
-                      <p className="text-blue-600 font-semibold truncate">
+                      <p className="text-blue-600 text-sm font-semibold truncate">
                         @{userdoc?.username}
                       </p>
                     </div>
-                  </div>
+                  </span>
                 </div>
 
-                <>
+                <div>
                   <button
                     onClick={handleOpen}
                     type="button"
-                    className="inline-flex items-center p-2 text-sm text-gray-500 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200"
+                    className="items-center p-2 text-sm text-gray-500 rounded-lg hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-200"
                   >
                     <EllipsisVerticalIcon className="w-6 h-6" />
                   </button>
@@ -395,7 +396,7 @@ export default function ProfileScreen() {
                     isInstructor={isInstructor}
                     handleRequest={handleRequest}
                   />
-                </>
+                </div>
               </div>
 
               {blockerId === custom_user.uid ? (
@@ -419,21 +420,32 @@ export default function ProfileScreen() {
                 <></>
               ) : (
                 <>
+                  {/* sm:flex-row sm:space-x-4 */}
                   {userdoc?.usertype === "Instructor" ? (
-                    <div className="flex mt-2 flex-row space-x-4">
-                      <div className="flex font-semibold flex-row items-center">
-                        Client rating: 0
-                        <StarIcon sx={{ color: yellow[800], fontSize: 30 }} />
-                      </div>
-                      <div className="flex font-semibold flex-row items-center">
-                        Employer rating: 0
-                        <StarIcon sx={{ color: yellow[800], fontSize: 30 }} />
-                      </div>
+                    <div className="flex mt-2 flex-wrap sm:space-x-2">
+                      <Tooltip
+                        title="This rating represents the level of satisfaction reported by past clients with whom this instructor has worked. Will be added in the next update."
+                        arrow
+                      >
+                        <div className="flex hover:cursor-pointer font-semibold items-center">
+                          Client rating: 0
+                          <StarIcon sx={{ color: yellow[800], fontSize: 30 }} />
+                        </div>
+                      </Tooltip>
+                      <Tooltip
+                        title="This rating represents the level of satifaction reported by past gym's with whom this instructor has worked with. Will be added in the next update"
+                        arrow
+                      >
+                        <div className="flex font-semibold flex-row items-center">
+                          Employer rating: 0
+                          <StarIcon sx={{ color: yellow[800], fontSize: 30 }} />
+                        </div>
+                      </Tooltip>
                     </div>
                   ) : userdoc?.usertype === "Gym" ? (
                     <div className="flex mt-2 flex-row space-x-4">
                       <RatingString id={userdoc?.docId} />
-                    
+
                       <MemberChip
                         type={"profile"}
                         id={id ? id : custom_user.uid}

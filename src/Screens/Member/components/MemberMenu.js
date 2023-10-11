@@ -2,7 +2,11 @@ import React, { useState, Fragment } from "react";
 import { Dialog, Menu, Transition } from "@headlessui/react";
 import PersonRemoveIcon from "@mui/icons-material/PersonRemove";
 import BlockIcon from "@mui/icons-material/Block";
-import { removeMember, blockUser } from "../../../Services/firebase";
+import {
+  removeMember,
+  blockUser,
+  addActivity,
+} from "../../../Services/firebase";
 import CustomDialogBox from "../../Settings/Components/CustomDialogBox";
 
 export default function MemberMenu({
@@ -18,12 +22,14 @@ export default function MemberMenu({
 
   const removeMemberFunc = async () => {
     await removeMember(uid, docId);
+    addActivity(uid, docId, "Memberremoved");
     refetch();
     refetchCount();
   };
 
   const blockMemberFunc = async () => {
     await blockUser(uid, docId);
+    addActivity(uid, docId, 'Memberblockedandremoved')
     refetch();
     refetchCount();
   };

@@ -10,6 +10,7 @@ import StarIcon from "@mui/icons-material/Star";
 import { yellow } from "@mui/material/colors";
 import { Menu } from "@headlessui/react";
 import { EllipsisVerticalIcon } from "@heroicons/react/20/solid";
+import MemberChip from "../../Profile/components/MemberChip";
 
 export default function GymCard({ refetch, docId }) {
   const custom_user = useSelector((state) => state.user.user);
@@ -94,10 +95,11 @@ export default function GymCard({ refetch, docId }) {
         </Menu>
       </div>
       <div className="flex flex-row mt-2 space-x-2">
-        <div className="rounded-md flex flex-row border px-4 justify-center items-center py-1.5 font-semibold border-black text-center text-sm">
+        <MemberChip id={docId} />
+        {/* <div className="rounded-md flex flex-row border px-4 justify-center items-center py-1.5 font-semibold border-black text-center text-sm">
           <GroupIcon />
           Members: 0
-        </div>
+        </div> */}
         <div className="rounded-md flex flex-row border px-4 justify-center items-center py-1.5 font-semibold border-black text-center text-sm">
           Rating: 0
           <StarIcon sx={{ color: yellow[800], fontSize: 30 }} />

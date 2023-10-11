@@ -20,7 +20,9 @@ export default function AddComments({
   const createCommentMutation = useMutation({
     mutationFn: createComment,
     onSuccess: (data) => {
+      console.log("success:", data);
       refetch();
+      refetchBlockedStatus();
       queryClient.invalidateQueries(["comments"]);
     },
   });
@@ -30,15 +32,24 @@ export default function AddComments({
 
     const isblocked = await checkIfUserisBlocked(userId, custom_user.uid);
 
-    if (isblocked) {
+    if (isblocked.exists()) {
+      console.log(isblocked.exists());
+      console.log("pressed");
       refetchBlockedStatus();
     } else {
-      createCommentMutation.mutate({
-        uid: userId,
-        docId,
-        comment,
-        senderId: custom_user.uid,
-      });
+      try {
+        createCommentMutation.mutate({
+          // id of the person's profile
+          uid: userId,
+          // post id
+          docId: docId,
+          comment: comment,
+          // id of the person sending the comment
+          senderId: custom_user.uid,
+        });
+      } catch (error) {
+        console.log("error:", error);
+      }
     }
 
     setComment("");

@@ -12,8 +12,7 @@ import {
 import CustomDialogBox from "../../Settings/Components/CustomDialogBox";
 import SubscriptionDialogBox from "./SubscriptionDialogBox";
 import { checkIfRequest } from "../../../Services/firebase";
-import { checkifFriendOrMember } from "../../../Services/firebase";
-import { checkIfUserisBlocked } from "../../../Services/firebase";
+import Tooltip from "@mui/material/Tooltip";
 
 export default function AccountModal({
   Fragment,
@@ -224,7 +223,7 @@ export default function AccountModal({
   };
 
   console.log("hiringStatus:", userdata);
-  console.log('usertype: ', usertype)
+  console.log("usertype: ", usertype);
 
   return (
     <>
@@ -336,20 +335,27 @@ export default function AccountModal({
                         ) : (
                           <></>
                         )}
-                        <button
-                          onClick={() => {
-                            if (pathname === "/profile") {
-                              navigate("/profile/reviews");
-                              dispatch(getUserId(" "));
-                            } else {
-                              navigate(`/${uid}/reviews`);
-                              dispatch(getUserId(uid));
-                            }
-                          }}
-                          className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700 "
+                        <Tooltip
+                          arrow
+                          title="Will be available in the next update."
                         >
-                          View reviews
-                        </button>
+                          <button
+                            disabled={true}
+                            onClick={() => {
+                              if (pathname === "/profile") {
+                                navigate("/profile/reviews");
+                                dispatch(getUserId(" "));
+                              } else {
+                                navigate(`/${uid}/reviews`);
+                                dispatch(getUserId(uid));
+                              }
+                            }}
+                            className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700 "
+                          >
+                            View reviews
+                          </button>
+                        </Tooltip>
+
                         <button
                           onClick={() => {
                             if (pathname === "/profile") {
@@ -382,10 +388,16 @@ export default function AccountModal({
                         ) : (
                           <></>
                         )}
-                        {custom_user.uid === uid && userdata?.usertype ==='Instructor' ? (
-                          <button className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700 ">
-                            View clients
-                          </button>
+                        {custom_user.uid === uid &&
+                        userdata?.usertype === "Instructor" ? (
+                          <Tooltip arrow  title="Will be available in the next update.">
+                            <button
+                              disabled={true}
+                              className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700 "
+                            >
+                              View clients
+                            </button>
+                          </Tooltip>
                         ) : (
                           <></>
                         )}

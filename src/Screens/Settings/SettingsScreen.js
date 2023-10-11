@@ -104,15 +104,17 @@ function SettingsScreen() {
             <>
               <button
                 onClick={openLogModalfunc}
-                className="flex w-full hover:bg-gray-100 border border-gray-300 p-4 rounded-lg shadow-md items-center justify-between"
+                className="truncate flex w-full hover:bg-gray-100 border border-gray-300 p-4 rounded-lg shadow-md items-center justify-between"
               >
-                <div className="items-center justify-center flex">
+                <div className="items-center justify-center flex text-ellipsis overflow-hidden">
                   <LogoutIcon />
-                  <span className="font-semibold ml-4">
-                    Log out of your account
+                  <span className="font-semibold ml-4 truncate ">
+                    Log out
                   </span>
                 </div>
-                <ArrowForwardIcon />
+                <div>
+                  <ArrowForwardIcon />
+                </div>
               </button>
               <CustomDialogBox
                 Fragment={Fragment}
@@ -124,11 +126,13 @@ function SettingsScreen() {
             </>
             <button
               onClick={openChangePasswordModal}
-              className="flex w-full hover:bg-gray-100 border border-gray-300 p-4 rounded-lg shadow-md items-center justify-between"
+              className="flex w-full hover:bg-gray-100 border border-gray-300 p-4 rounded-lg shadow-md items-center justify-between truncate"
             >
-              <div className="items-center justify-center flex">
+              <div className="items-center justify-center flex text-ellipsis overflow-hidden">
                 <LockOpenIcon />
-                <span className="font-semibold ml-4">Change your password</span>
+                <span className="font-semibold ml-4 truncate">
+                  Change your password
+                </span>
               </div>
               <ArrowForwardIcon />
             </button>
@@ -142,11 +146,11 @@ function SettingsScreen() {
               onClick={() => {
                 navigate("/settings/viewProfile");
               }}
-              className="flex w-full hover:bg-gray-100 border border-gray-300 p-4 rounded-lg shadow-md items-center justify-between"
+              className="flex w-full hover:bg-gray-100 border border-gray-300 p-4 rounded-lg shadow-md truncate items-center justify-between"
             >
-              <div className="items-center justify-center flex">
+              <div className="items-center justify-center flex text-ellipsis overflow-hidden">
                 <AccountCircleIcon />
-                <span className="font-semibold ml-4">View your profile</span>
+                <span className="font-semibold ml-4 truncate">View your profile</span>
               </div>
               <ArrowForwardIcon />
             </button>
@@ -154,11 +158,11 @@ function SettingsScreen() {
               onClick={() => {
                 navigate("/settings/viewPrivacy");
               }}
-              className="flex w-full hover:bg-gray-100 border border-gray-300 p-4 rounded-lg shadow-md items-center justify-between"
+              className="flex w-full hover:bg-gray-100 border truncate border-gray-300 p-4 rounded-lg shadow-md items-center justify-between"
             >
-              <div className="items-center justify-center flex">
+              <div className="items-center justify-center flex text-ellipsis overflow-hidden">
                 <ShieldIcon />
-                <span className="font-semibold ml-4">
+                <span className="font-semibold ml-4 truncate">
                   View privacy settings
                 </span>
               </div>
@@ -168,22 +172,22 @@ function SettingsScreen() {
               onClick={() => {
                 navigate("/settings/blockedUsers");
               }}
-              className="flex w-full hover:bg-gray-100 border border-gray-300 p-4 rounded-lg shadow-md items-center justify-between"
+              className="flex w-full hover:bg-gray-100 border truncate border-gray-300 p-4 rounded-lg shadow-md items-center justify-between"
             >
-              <div className="items-center justify-center flex">
+              <div className="items-center justify-center flex  text-ellipsis overflow-hidden ">
                 <BlockIcon />
-                <span className="font-semibold ml-4">View blocked users</span>
+                <span className="font-semibold ml-4 truncate">View blocked users</span>
               </div>
               <ArrowForwardIcon />
             </button>
 
             <button
               onClick={openDeleteAccModalfunc}
-              className="flex w-full hover:bg-gray-100 border border-gray-300 p-4 rounded-lg shadow-md items-center justify-between"
+              className="flex w-full hover:bg-gray-100 border truncate border-gray-300 p-4 rounded-lg shadow-md items-center justify-between"
             >
-              <div className="items-center justify-center flex">
+              <div className="items-center justify-center flex text-ellipsis overflow-hidden">
                 <DeleteIcon className="text-red-500" />
-                <span className="font-semibold ml-4 text-red-500">
+                <span className="font-semibold ml-4 text-red-500 truncate">
                   Delete your account
                 </span>
               </div>

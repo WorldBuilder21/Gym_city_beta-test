@@ -105,18 +105,29 @@ export default function WorkoutRoutineCard({ data, refetch, openSnackbar, userty
             dispatch(getUserId(data.creatorId));
             navigate("/home/viewRoutine");
           }}
-          className="flex items-center"
+          className="flex items-center flex-wrap sm:flex-nowrap"
         >
           <Avatar
             src={data?.photoUrl}
-            sx={{ width: 100, height: 100 }}
+            sx={{ 
+              height: {
+                xs: 200,
+                sm: 100,
+                md: 100,
+              },
+              width: {
+                xs: '100%',
+                sm: 100,
+                md: 100,
+              }
+            }}
             variant="rounded"
           >
             <ImageIcon />
           </Avatar>
-          <span className="w-full ml-3 text-ellipsis overflow-hidden">
-            <p className="font-bold text-xl block truncate">{data?.title}</p>
-            <div>total workouts: {data?.total_workouts}</div>
+          <span className="w-full ml-0 sm:ml-3 text-ellipsis overflow-hidden">
+            <p className="font-bold text-md block truncate">{data?.title}</p>
+            <div className="text-sm">total workouts: {data?.total_workouts}</div>
             <div>
               <div
                 className={`${routineColorCode()} text-white text-center w-full mt-2 font-medium text-md px-2.5 py-1.5 rounded border`}

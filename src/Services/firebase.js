@@ -819,11 +819,19 @@ export const editGoalDoc = async ({
 
 // -----------------------------------------------------------------------------
 
-export const leaveGym = async (uid, docId) => {
+export const leaveGym = async (uid, docId, type) => {
   const userRef = doc(db, "users", uid);
   const memberRef = doc(db, "users", docId, "members", uid);
+  const instructorRef = doc(db, "users", docId, "instructors", uid);
 
-  await deleteDoc(memberRef);
+  if (type === "Instructor") {
+    await deleteDoc(instructorRef);
+    addActivity(docId, uid, "Instructorleft");
+  } else {
+    await deleteDoc(memberRef);
+    addActivity(docId, uid, "Memberleft");
+  }
+
   await updateDoc(userRef, {
     memberships: arrayRemove(docId),
   });
@@ -954,7 +962,6 @@ export const removeInstructor = async (uid, docId) => {
   const docRef = doc(db, "users", uid, "instructors", docId);
   await deleteDoc(docRef);
   const userRef = doc(db, "users", docId);
-
   await updateDoc(userRef, {
     memberships: arrayRemove(uid),
   });
@@ -1338,6 +1345,7 @@ export const getBlockedCount = async (uid) => {
 
 export const blockInstructor = async (uid, docId) => {
   await removeInstructor(uid, docId);
+  addActivity(uid, docId, "Instructorblockedandremoved");
   await blockUser(uid, docId);
 };
 

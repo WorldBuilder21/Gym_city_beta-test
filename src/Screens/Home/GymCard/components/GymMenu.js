@@ -4,6 +4,7 @@ import { Menu, Transition } from "@headlessui/react";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import BlockIcon from "@mui/icons-material/Block";
 import { leaveGym, blockGym } from "../../../../Services/firebase";
+import { useSelector } from "react-redux";
 
 export default function GymMenu({
   MenuFragment,
@@ -14,10 +15,12 @@ export default function GymMenu({
 }) {
   const [openLeaveGymModal, setOpenLeaveGymModal] = useState(false);
   const [openBlockModal, setBlockModal] = useState(false);
+  const userdoc = useSelector((state) => state.userdoc.userdoc);
 
   const leaveGymFunc = async () => {
     // add a leave record
-    await leaveGym(uid, docId);
+    await leaveGym(uid, docId, userdoc.usertype);
+
     refetch();
   };
 

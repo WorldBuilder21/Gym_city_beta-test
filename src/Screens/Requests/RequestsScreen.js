@@ -31,7 +31,6 @@ export default function RequestScreen() {
       queryFn: (pageParam) => getRequests(custom_user.uid, pageParam.pageParam),
       getNextPageParam: (lastpage) => lastpage.nextPage,
     },
-    { enabled: false }
   );
 
   const {
@@ -43,7 +42,6 @@ export default function RequestScreen() {
       queryKey: ["count_instructors"],
       queryFn: () => getRequestsCount(custom_user.uid),
     },
-    { enabled: false }
   );
 
   const request_count =

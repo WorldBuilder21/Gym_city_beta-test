@@ -7,7 +7,7 @@ import ProfileScreen from "../Profile/ProfileScreen";
 
 function Home() {
   const user_doc = useSelector((state) => state.userdoc.userdoc);
-  console.log(user_doc);
+  console.log('user_doc_status_home: ',user_doc);
   return user_doc.usertype === "Gym" ? <ProfileScreen /> : <UserHomeScreen />;
 }
 

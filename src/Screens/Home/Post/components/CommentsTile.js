@@ -48,14 +48,14 @@ export default function CommentsTile({ docId, item, uid, comment_id }) {
   return (
     <div className="flex w-full justify-between">
       <div className="flex justify-center items-start">
-        <Avatar src={userData?.photoUrl} />
+        <Avatar sx={{ width: 40, height: 40 }} src={userData?.photoUrl} />
         <div className="flex flex-col ml-2 justify-center items-start">
-          <p className="font-semibold">
+          <p className="font-semibold text-xs">
             {userData?.usertype === "Gym"
               ? userData?.gymname
               : userData?.fullname}
           </p>
-          <p>
+          <p className="text-sm">
             {deleteCommentMutation.status === "loading"
               ? "Deleted"
               : item.comment}

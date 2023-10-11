@@ -7,6 +7,9 @@ const GymProtectedRouter = ({ children }) => {
   const user_doc = useSelector((state) => state.userdoc.userdoc);
   const navigate = useNavigate();
 
+  console.log("custom_user_gym_status:", custom_user);
+  console.log("user_doc_status_gym: ", user_doc);
+
   const validator = () => {
     console.log(user_doc);
     if (custom_user && user_doc) {

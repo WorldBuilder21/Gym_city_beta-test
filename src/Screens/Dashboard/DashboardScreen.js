@@ -16,19 +16,50 @@ import {
 import { useNavigate } from "react-router";
 import { recentActivities } from "../../Services/firebase";
 import ActivityCard from "./ActivityScreen/components/ActivityCard";
-
+import ComponentSkeleton from "../Components/ComponentSkeleton";
+import ActivitySkeleton from "./components/ActivitySkeleton";
+import { useQuery } from "@tanstack/react-query";
+import { useSelector } from "react-redux";
+import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import TaskIcon from "@mui/icons-material/Task";
 
 export default function DashboardScreen() {
   const [openModal, setOpenModal] = useState(false);
   const navigate = useNavigate();
+
+  const custom_user = useSelector((state) => state.user.user);
 
   const d = new Date();
   const formatted = moment(d).format("MMMM YYYY");
 
   const [pickedDate, setPickedDate] = useState(formatted);
 
+  const { status, data: recent_data } = useQuery(
+    {
+      queryKey: ["recent_activities", 3],
+      queryFn: () => recentActivities(custom_user.uid),
+    },
+    { enabled: false }
+  );
+
+  // const query = useQuery();
+
   // things that count as activities
-  
+
+  // activity types
+  // - MemberAdded
+  // - Memberremoved
+  // - Memberblockedandremoved
+  // - Memberleft
+  // - Instructorleft
+  // - InstructorAdded
+  // - Instructorblockedandremoved
+  // - Routineapproved
+  // - Routinerejected
+  // - Instructorremoved
+  // - Postapproved
+  // - Postrejected
+
   // members joining
   // members leaving
   // instructor leaving
@@ -49,19 +80,6 @@ export default function DashboardScreen() {
   //    year: date.getFullyear()
   //    week: findWeekNumberForDay()
   //  }
-  // to prevent spam: you want to make it individual users
-
-  const [data, setData] = useState({ datasets: [{ data: [] }] });
-
-  const findWeekInMonth = () => {
-    const currentDate = new Date();
-    const currentYear = currentDate.getFullYear();
-    const currentMonth = currentDate.getMonth();
-    const totalWeekInMonth = WeekGenerator(currentYear, currentMonth);
-    const weekArray = generateWeekArray(totalWeekInMonth);
-
-    return weekArray;
-  };
 
   const handleClose = () => {
     setOpenModal(false);
@@ -99,6 +117,45 @@ export default function DashboardScreen() {
           </div>
           <div className="flex flex-col mt-2">
             <div className="font-semibold text-2xl">Recent activities</div>
+            <div className="flex flex-col m-4">
+              {status === "loading" ? (
+                <div className="flex mt-2 mb-2 items-center justify-center">
+                  {<CircularProgress />}
+                </div>
+              ) : status === "error" ? (
+                <div className="flex justify-center items-center">
+                  <div className="text-red-500 flex justify-center items-center">
+                    <div className="text-center">
+                      <ErrorOutlineIcon sx={{ fontSize: 50 }} />
+                    </div>
+                    <div className="font-semibold ml-4">
+                      An error has occurred.
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  {recent_data.docs.length === 0 ? (
+                    <div className="flex justify-center items-center">
+                      <div className="text-gray-500 flex justify-center items-center">
+                        <TaskIcon sx={{ fontSize: 50 }} />
+                        <div className="font-semibold ml-4">
+                          There are no activities to display.
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <ol className="relative border-l border-gray-200">
+                      {recent_data.docs.map((data, index) => (
+                        <div key={index} className="w-full">
+                          <ActivityCard data={data?.data()} />
+                        </div>
+                      ))}
+                    </ol>
+                  )}
+                </div>
+              )}
+            </div>
             <button
               onClick={() => navigate("/dashboard/viewActivity")}
               className="w-full p-3 border text-center rounded-md"

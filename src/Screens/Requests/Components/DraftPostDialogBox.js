@@ -15,6 +15,8 @@ import {
 } from "firebase/firestore";
 import { useSelector } from "react-redux";
 import { db } from "../../../firebase";
+import { addActivity } from "../../../Services/firebase";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function DraftPostDialogBox({
   isOpen,
@@ -34,7 +36,7 @@ export default function DraftPostDialogBox({
   const custom_user = useSelector((state) => state.user.user);
   const userdoc = useSelector((state) => state.userdoc.userdoc);
 
-  console.log("custom uid:", custom_user.uid);
+  const queryClient = useQueryClient()
 
   const onSubmit = async (data, e) => {
     e.preventDefault();
@@ -43,6 +45,7 @@ export default function DraftPostDialogBox({
       const gymId = custom_user.uid;
       setIsLoading(true);
       const collection_ref = collection(db, "users", gymId, "posts");
+
       const postRef = await addDoc(collection_ref, {
         caption: item?.caption,
         photoUrl: item?.photoUrl,
@@ -56,11 +59,15 @@ export default function DraftPostDialogBox({
       await updateDoc(updateRef, {
         docId: postRef.id,
       });
+
+      addActivity(gymId, item?.senderId, "Postapproved");
+
       // delete Request
       const request_ref = doc(db, "users", gymId, "requests", item?.docId);
       await deleteDoc(request_ref);
       refetch();
       refetchCount();
+      queryClient.invalidateQueries('posts')
       openSnackbar({ message: "Post added successfully." });
       handleClose();
       setIsLoading(false);
@@ -176,7 +183,10 @@ export default function DraftPostDialogBox({
                       Post
                     </button>
                     <button
-                      onClick={handleDecline}
+                      onClick={() => {
+                        addActivity(gymId, item?.senderId, 'Postrejected')
+                        handleDecline();
+                      }}
                       disabled={isLoading}
                       className="w-full text-red-500 border-red-500 disabled:opacity-25 mt-5 hover:border-red-300 hover:text-red-300  border font-medium rounded-lg text-sm px-5 py-2.5 text-center"
                       type="button"

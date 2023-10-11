@@ -68,6 +68,7 @@ function App() {
             </Route>
 
             <Route path="/profile/reviews" element={<ReviewScreen />} />
+            <Route path="/settings/viewProfile/reviews" element={<ReviewScreen />} />
             <Route
               path="/requests/viewRoutine"
               element={<ViewWorkoutRoutine />}

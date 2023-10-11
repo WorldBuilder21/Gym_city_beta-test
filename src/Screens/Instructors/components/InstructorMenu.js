@@ -1,6 +1,10 @@
 import React, { Fragment, useState } from "react";
 import CustomDialogBox from "../../Settings/Components/CustomDialogBox";
-import { removeInstructor, blockInstructor } from "../../../Services/firebase";
+import {
+  removeInstructor,
+  blockInstructor,
+  addActivity,
+} from "../../../Services/firebase";
 import { Menu, Transition } from "@headlessui/react";
 import PersonRemoveIcon from "@mui/icons-material/PersonRemove";
 import BlockIcon from "@mui/icons-material/Block";
@@ -18,13 +22,15 @@ export default function InstructorMenu({
 
   const removeFunc = async () => {
     await removeInstructor(uid, docId);
+    addActivity(uid, docId, "Instructorremoved");
     refetch();
     refetchCount();
   };
 
   const blockFunc = async () => {
-    handleCloseBlockModal()
+    handleCloseBlockModal();
     await blockInstructor(uid, docId);
+    addActivity(uid, docId, 'Instructorremovedandblocked')
     refetch();
     refetchCount();
   };

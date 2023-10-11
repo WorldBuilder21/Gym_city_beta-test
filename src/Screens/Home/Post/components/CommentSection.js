@@ -25,9 +25,6 @@ export default function CommentSection({
     { enabled: false }
   );
 
-  console.log("uid:", uid);
-  console.log("docId:", docId);
-
   const {
     status: comment_status,
     data: count,
@@ -57,6 +54,11 @@ export default function CommentSection({
   if (status === "loading") {
     return <div></div>;
   }
+
+  console.log(
+    "comments:",
+    comments?.docs?.slice(0, commentsSlice)?.map((item, index) => item?.data())
+  );
 
   return (
     <>

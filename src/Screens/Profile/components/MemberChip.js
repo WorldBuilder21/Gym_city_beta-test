@@ -16,7 +16,7 @@ export default function MemberChip({ id, type }) {
       Members: {count}
     </div>
   ) : (
-    <div className="border flex-row items-center justify-cente flex p-2 rounded-lg text-sm px-4 font-semibold">
+    <div className="border border-black flex-row items-center justify-cente flex p-2 rounded-lg text-sm px-4 font-semibold">
       Members: {count}
     </div>
   );

@@ -23,17 +23,17 @@ const app = firebase.initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 
 //for production
-// export const db = getFirestore(app);
+export const db = getFirestore(app);
 
 // for text purposes
-export const db = getFirestore();
+// export const db = getFirestore();
 
 export const storage = getStorage(app);
 
 const analytics = getAnalytics(app);
 
-connectAuthEmulator(auth, "http://localhost:9099");
-connectFirestoreEmulator(db, "localhost", 8080);
-connectStorageEmulator(storage, "localhost", 9199);
+// connectAuthEmulator(auth, "http://localhost:9099");
+// connectFirestoreEmulator(db, "localhost", 8080);
+// connectStorageEmulator(storage, "localhost", 9199);
 
 export default app;

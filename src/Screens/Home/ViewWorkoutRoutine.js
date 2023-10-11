@@ -9,7 +9,11 @@ import { ChevronUpIcon } from "@heroicons/react/20/solid";
 import WorkoutCard from "./Components/WorkoutCard";
 import BedIcon from "@mui/icons-material/Bed";
 import { useState } from "react";
-import { declineRequest, getUserDataUid } from "../../Services/firebase";
+import {
+  addActivity,
+  declineRequest,
+  getUserDataUid,
+} from "../../Services/firebase";
 import MuiAlert from "@mui/material/Alert";
 import { Snackbar } from "@mui/material";
 import {
@@ -21,7 +25,7 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { db } from "../../firebase";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const Alert = React.forwardRef(function Alert(props, ref) {
   return <MuiAlert elevation={6} ref={ref} variant="filled" {...props} />;
@@ -50,6 +54,8 @@ export default function ViewWorkoutRoutine() {
     message: "",
     severity: "",
   });
+
+  const query = useQueryClient();
 
   const { status, data: userdata } = useQuery(
     {
@@ -92,6 +98,8 @@ export default function ViewWorkoutRoutine() {
       total_workouts: routineData.total_workouts,
     });
 
+    addActivity(gymId, creatorId, "Routineapproved");
+
     const updateRef = doc(db, "users", gymId, "routines", routineRef.id);
     await updateDoc(updateRef, {
       docId: routineRef.id,
@@ -101,6 +109,9 @@ export default function ViewWorkoutRoutine() {
     await deleteDoc(request_ref);
 
     navigate(-1);
+    query.invalidateQueries("requests");
+    query.invalidateQueries("count_instructors");
+    query.invalidateQueries('routines')
     setIsLoading(false);
   };
 
@@ -111,8 +122,13 @@ export default function ViewWorkoutRoutine() {
     try {
       setIsLoading(true);
       await declineRequest(gymId, docId);
+
+      addActivity(gymId, routineData.senderId, "Routinerejected");
       openSnackbar({ message: "Request Declined.", severity: "error" });
       navigate(-1);
+      query.invalidateQueries("requests");
+      query.invalidateQueries("count_instructors");
+      query.invalidateQueries('routines')
       setIsLoading(false);
     } catch (error) {
       setIsLoading(false);
@@ -172,8 +188,8 @@ export default function ViewWorkoutRoutine() {
           </div>
         </div>
       </nav>
-      <div className="flex flex-col items-center justify-center">
-        <div className="mt-10 w-full px-5 max-w-sm md:max-w-lg md:mx-2">
+      <div className="flex flex-col w-full items-center justify-center">
+        <div className="mt-10 w-full px-5 max-w-lg md:max-w-lg md:mx-2">
           <div className="flex flex-col md:flex-row">
             <Avatar
               src={routineData.photoUrl}
