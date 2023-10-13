@@ -275,7 +275,12 @@ export default function AccountModal({
                       // if user is not a member of instructor, send memeber ship request
                       <>
                         {custom_user.uid === uid ? (
-                          <button className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700 ">
+                          <button
+                            onClick={() => {
+                              navigate("/profile/editProfile");
+                            }}
+                            className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700 "
+                          >
                             Edit profile
                           </button>
                         ) : (
@@ -329,7 +334,12 @@ export default function AccountModal({
                     ) : usertype === "Instructor" ? (
                       <>
                         {custom_user.uid === uid ? (
-                          <button className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700 ">
+                          <button
+                            onClick={() => {
+                              navigate("/profile/editProfile");
+                            }}
+                            className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700 "
+                          >
                             Edit profile
                           </button>
                         ) : (
@@ -390,7 +400,10 @@ export default function AccountModal({
                         )}
                         {custom_user.uid === uid &&
                         userdata?.usertype === "Instructor" ? (
-                          <Tooltip arrow  title="Will be available in the next update.">
+                          <Tooltip
+                            arrow
+                            title="Will be available in the next update."
+                          >
                             <button
                               disabled={true}
                               className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700 "
@@ -420,7 +433,12 @@ export default function AccountModal({
                         </button>
 
                         {custom_user.uid === uid ? (
-                          <button className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700 ">
+                          <button
+                            onClick={() => {
+                              navigate("/profile/editProfile");
+                            }}
+                            className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700 "
+                          >
                             Edit profile
                           </button>
                         ) : (

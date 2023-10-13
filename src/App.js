@@ -77,6 +77,7 @@ function App() {
               path="/settings/viewProfile/editProfile"
               element={<EditProfileScreen />}
             />
+            <Route path="/profile/editProfile" element={<EditProfileScreen />} />
             <Route path="/inbox/viewMessage" element={<ViewMessage />} />
             <Route path="/inbox/compose" element={<ComposeScreen />} />
             <Route
