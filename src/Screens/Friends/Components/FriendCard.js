@@ -41,7 +41,7 @@ export default function FriendCard({
         className="flex items-center"
       >
         <div className="flex">
-          <Avatar sx={{ width: 70, height: 70 }} />
+          <Avatar src={userData?.photoUrl} sx={{ width: 70, height: 70 }} />
           <div className="flex flex-col ml-3 justify-center space-y-2">
             <div>
               <p className="font-semibold text-md text-clip truncate">

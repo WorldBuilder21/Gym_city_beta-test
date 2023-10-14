@@ -60,8 +60,15 @@ export default function RoutineScreen({
           accountData={data}
           refetch={refetch}
           openSnackbar={openSnackbar}
-          
         />
+      );
+    } else if (userdoc.usertype === "Gym" && userdoc?.usertype === "Gym") {
+      return (
+        <div className="flex flex-col justify-center items-center mt-40">
+          <span className="text-center font-semibold text-gray-400 mt-2 text-xl">
+            You are not allowed to view the routines of other gym's.
+          </span>
+        </div>
       );
     } else {
       if (data?.routinePrivacyStatus === "Private") {

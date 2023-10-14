@@ -1,5 +1,13 @@
 {
   "projects": {
     "default": "gym-city-test"
+  },
+  "targets": {},
+  "etags": {
+    "gym-city-test": {
+      "extensionInstances": {
+        "firestore-algolia-search": "c6b5730899508677df9c445057c7e12a7eca44bba9d61e2887c4d71b2b74f2d7"
+      }
+    }
   }
 }

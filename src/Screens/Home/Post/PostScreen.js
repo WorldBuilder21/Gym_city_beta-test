@@ -53,13 +53,11 @@ export default function PostScreen({
     hasNextPage,
     fetchNextPage,
     isFetchingNextPage,
-  } = useInfiniteQuery(
-    {
-      queryKey: ["posts"],
-      queryFn: (pageParam) => getPostsDocs(uid, pageParam.pageParam),
-      getNextPageParam: (lastpage) => lastpage.nextPage,
-    },
-  );
+  } = useInfiniteQuery({
+    queryKey: ["posts"],
+    queryFn: (pageParam) => getPostsDocs(uid, pageParam.pageParam),
+    getNextPageParam: (lastpage) => lastpage.nextPage,
+  });
 
   // data about the user profile being view
 
@@ -98,6 +96,14 @@ export default function PostScreen({
           isInstructor={isInstructor}
           accountData={user_data}
         />
+      );
+    } else if (userdoc.usertype === "Gym" && userdoc?.usertype === "Gym") {
+      return (
+        <div className="flex flex-col justify-center items-center mt-40">
+          <span className="text-center font-semibold text-gray-400 mt-2 text-xl">
+            You are not allowed to view the posts of other gym's.
+          </span>
+        </div>
       );
     } else {
       switch (user_data?.postPrivacyStatus) {

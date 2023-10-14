@@ -192,7 +192,7 @@ export default function ViewWorkoutRoutine() {
         <div className="mt-10 w-full px-5 max-w-lg md:max-w-lg md:mx-2">
           <div className="flex flex-col md:flex-row">
             <Avatar
-              src={routineData.photoUrl}
+              src={routineData?.photoUrl}
               sx={{ width: 150, height: 150 }}
               variant="rounded"
             >
@@ -201,17 +201,17 @@ export default function ViewWorkoutRoutine() {
             <div className="flex flex-col mt-2 md:mt-0 ml-0 md:ml-5 justify-center space-y-2">
               <div>
                 <p className="font-semibold text-2xl truncate">
-                  {routineData.title}
+                  {routineData?.title}
                 </p>
                 <p className="font-semibold text-gray-500">
-                  total workouts: {routineData.total_workouts}
+                  total workouts: {routineData?.total_workouts}
                 </p>
-                <p>{routineData.bio}</p>
+                <p>{routineData?.bio}</p>
               </div>
             </div>
           </div>
 
-          {routineData.creatorId === userId ? (
+          {routineData?.creatorId === userId ? (
             <></>
           ) : (
             <div className="mt-2 mb-2 flex items-center">
@@ -241,7 +241,7 @@ export default function ViewWorkoutRoutine() {
               routineData
             )} text-center mb-3 text-white w-full mt-2 font-medium text-md px-2.5 py-1.5 rounded border`}
           >
-            {routineData.difficulty.name}
+            {routineData?.difficulty?.name}
           </div>
           <div className="w-full space-y-5">
             {dayOfTheWeek.map((day, index) => (
@@ -255,7 +255,7 @@ export default function ViewWorkoutRoutine() {
                       <Disclosure.Button className="flex w-full justify-between rounded-lg bg-green-100 px-4 py-2 text-left text-sm font-medium hover:bg-green-200 focus:outline-none focus-visible:ring focus-visible:ring-green-500 focus-visible:ring-opacity-75">
                         <div>
                           <span>
-                            {day} · {routineData.routines[day].length}
+                            {day} · {routineData?.routines[day]?.length}
                           </span>
                         </div>
                         <ChevronUpIcon
@@ -266,9 +266,9 @@ export default function ViewWorkoutRoutine() {
                       </Disclosure.Button>
                       <Disclosure.Panel className="px-4 pt-4 pb-2 text-sm text-gray-800">
                         <div className="flex flex-col space-y-2">
-                          {routineData.routines[day].length !== 0 ? (
+                          {routineData?.routines[day]?.length !== 0 ? (
                             <div className="space-y-2">
-                              {routineData.routines[day].map((data, index) => (
+                              {routineData?.routines[day]?.map((data, index) => (
                                 <div key={index}>
                                   <WorkoutCard
                                     name_of_exercise={data.name_of_exercise}

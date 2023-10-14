@@ -1,10 +1,4 @@
 import React from "react";
-import { useQuery } from "@tanstack/react-query";
-import {
-  top_instructors,
-  top_gym,
-  getTestUsers,
-} from "../../Services/firebase";
 import GymSearchCard from "./Components/GymSearchCard";
 import InstructorSearchCard from "./Components/InstructorSearchCard";
 import UserSearchCard from "./Components/UserSearchCard";
@@ -15,9 +9,14 @@ import { TextField } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import InputAdornment from "@mui/material/InputAdornment";
 import { IconButton } from "@mui/material";
-import SearchBar from "./Components/SearchBar";
+import {
+  top_instructors,
+  top_gym,
+  getTestUsers,
+} from "../../Services/firebase";
+import { useQuery } from "@tanstack/react-query";
 
-function Search() {
+export default function PopularScreen() {
   const userdoc = useSelector((state) => state.userdoc.userdoc);
   const { data: gym_data, status: gym_status } = useQuery(
     {
@@ -57,27 +56,9 @@ function Search() {
           : false,
     }
   );
-
   return (
-    <div className="flex flex-col m-4">
-      <SearchBar />
-      {/* <Search /> */}
-      {/* <div>
-        <TextField
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton>
-                  <SearchIcon />
-                </IconButton>
-              </InputAdornment>
-            ),
-          }}
-          fullWidth
-          label="Search..."
-        />
-      </div> */}
-      {/* {userdoc.usertype === "User" || userdoc.usertype === "Gym" ? (
+    <div>
+      {userdoc.usertype === "User" || userdoc.usertype === "Gym" ? (
         <div className="mt-4">
           <h1 className="font-semibold text-2xl mb-2">Popular instructors</h1>
           {instructor_status === "loading" ? (
@@ -121,8 +102,8 @@ function Search() {
         </div>
       ) : (
         <></>
-      )} */}
-      {/* {userdoc.usertype === "User" || userdoc.usertype === "Instructor" ? (
+      )}
+      {userdoc.usertype === "User" || userdoc.usertype === "Instructor" ? (
         <div className="mt-4">
           <h1 className="font-semibold text-2xl mb-2">Popular gyms</h1>
           {gym_status === "loading" ? (
@@ -166,54 +147,7 @@ function Search() {
         </div>
       ) : (
         <></>
-      )} */}
-      {/* This section is only for testing purposes */}
-      {/* {userdoc.usertype === "User" || userdoc.usertype === "Instructor" ? (
-        <div className="mt-4">
-          <h1 className="font-semibold text-2xl mb-2">Test Users</h1>
-          {user_status === "loading" ? (
-            <div className="flex flex-wrap">
-              <SearchSkeleton />
-              <SearchSkeleton />
-              <SearchSkeleton />
-            </div>
-          ) : user_status === "error" ? (
-            <div className="flex justify-center items-center">
-              <div className="text-red-500 mt-16 mb-16">
-                <ErrorOutlineIcon sx={{ fontSize: 70 }} />
-                <span className="text-lg text-center ml-3">
-                  An error has occured, please refresh the page.
-                </span>
-              </div>
-            </div>
-          ) : (
-            <div>
-              {user_data.empty ? (
-                <div className="flex justify-center items-center">
-                  <span className="text-lg mt-16 mb-16 text-gray-500">
-                    There are no instructors to display
-                  </span>
-                </div>
-              ) : (
-                <div className="flex flex-wrap">
-                  {user_data.docs.map((data, index) => (
-                    <UserSearchCard
-                      key={index}
-                      fullname={data.data().fullname}
-                      username={data.data().username}
-                      docId={data.data().docId}
-                    />
-                  ))}
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      ) : (
-        <></>
-      )} */}
+      )}
     </div>
   );
 }
-
-export default Search;
