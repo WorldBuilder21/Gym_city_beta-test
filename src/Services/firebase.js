@@ -273,6 +273,8 @@ export const doesUserNameExist = async (username) => {
             ...doc.data(),
           })),
         };
+      } else {
+        return { exist: false, data: {} };
       }
     } else {
       return { exist: false, data: {} };

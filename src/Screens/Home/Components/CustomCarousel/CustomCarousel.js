@@ -29,6 +29,8 @@ export default function CustomCarousel(props) {
   }, [emblaApi]);
 
   console.log(emblaRef);
+
+  console.log("image data:", data?.length);
   return (
     <div className="embla w-full md:w-[75%] ">
       <div className="embla__viewport " ref={emblaRef}>
@@ -37,7 +39,9 @@ export default function CustomCarousel(props) {
             <div key={index} className="embla__slide">
               <div className="relaive">
                 <div className="absolute rounded-full bg-slate-100 ml-2 top-2 left-4">
-                  <span className="text-sm p-2 ">{index + 1}</span>
+                  <span className="text-sm p-2 ">
+                    {index + 1} / {data?.length}
+                  </span>
                 </div>
 
                 {/* delete picture */}
@@ -105,7 +109,7 @@ export default function CustomCarousel(props) {
                     />
                   </svg>
                 </div>
-                <CarouselImage data={item} />
+                  <CarouselImage data={item} />
               </div>
             </div>
           ))}

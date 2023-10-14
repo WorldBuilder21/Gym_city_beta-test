@@ -60,6 +60,7 @@ function UserScreen({ openSnackbar, closeSnackbar, selectedType }) {
 
     setIsLoading(true);
     const usernameExists = await doesUserNameExist(username);
+    console.log(usernameExists)
     if (usernameExists.exist === false) {
       try {
         if (provider_bool === false) {

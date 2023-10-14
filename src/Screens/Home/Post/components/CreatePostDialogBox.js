@@ -138,7 +138,7 @@ export default function CreatePostDialogBox({
     <Transition appear show={isOpen} as={Fragment}>
       <Dialog
         as="div"
-        className="relative z-10"
+        className="relative z-20"
         onClose={() => {
           handleClose();
           //   reset({}, { keepErrors: true });
@@ -157,7 +157,7 @@ export default function CreatePostDialogBox({
           <div className="fixed inset-0 bg-black bg-opacity-25" />
         </Transition.Child>
         <div className="fixed inset-0 overflow-y-auto">
-          <div className="flex min-h-full items-center justify-center p-4 text-center">
+          <div className="flex mt-10 min-h-full items-center justify-center p-4 text-center">
             <Transition.Child
               as={Fragment}
               enter="ease-out duration-300"
@@ -199,11 +199,13 @@ export default function CreatePostDialogBox({
                     </label>
                   </div>
                 ) : (
-                  <img
-                    className="w-full rounded-sm"
-                    src={postFile}
-                    alt="post file"
-                  />
+                  <div className="bg-black rounded-sm">
+                    <img
+                      className="w-full object-contain max-h-80 rounded-sm"
+                      src={postFile}
+                      alt="post file"
+                    />
+                  </div>
                 )}
                 <form onSubmit={handleSubmit(onSubmit)} className="mt-5">
                   <Controller

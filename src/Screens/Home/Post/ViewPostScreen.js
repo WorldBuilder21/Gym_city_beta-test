@@ -63,7 +63,7 @@ export default function ViewPostScreen() {
           </div>
         </nav>
 
-        {status === "error" ? (
+        {status === "error" || blocked_status === "error" ? (
           <ErrorMessage message={"This post could not be retrieved"} />
         ) : status === "loading" && blocked_status === "loading" ? (
           <div className="flex flex-col mt-10 mx-2 items-center">
@@ -78,7 +78,7 @@ export default function ViewPostScreen() {
               </span>
             </div>
           </div>
-        ) : (
+        ) : status !== "loading" ? (
           <div className="flex mx-2 md:mx-0 flex-col mt-10 items-center">
             <FullViewPostCard
               commentInput={commentInput}
@@ -90,6 +90,8 @@ export default function ViewPostScreen() {
               refetchBlockedStatus={refetchBlockedStatus}
             />
           </div>
+        ) : (
+          <></>
         )}
         <div className="mb-4"></div>
       </div>

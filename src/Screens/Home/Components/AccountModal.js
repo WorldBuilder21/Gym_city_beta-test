@@ -276,7 +276,7 @@ export default function AccountModal({
                       <>
                         {custom_user.uid === uid ? (
                           <button
-                            onClick={() => {
+                            onClick={() => { 
                               navigate("/profile/editProfile");
                             }}
                             className="flex border justify-center items-center py-2.5 w-full px-2 rounded-lg  hover:bg-gray-100 hover:text-blue-700 "

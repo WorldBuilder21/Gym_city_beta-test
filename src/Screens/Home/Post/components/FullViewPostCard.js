@@ -30,8 +30,18 @@ export default function FullViewPostCard({
 
   const userId = useSelector((state) => state.userId.userId);
 
-  const date = new Date(ts?.seconds * 1000 + ts?.nanoseconds / 1000000);
-  const formattedDate = formatDistance(date, new Date());
+  const generateTime = () => {
+    try {
+      const date = new Date(
+        data?.ts?.seconds * 1000 + data?.ts?.nanoseconds / 1000000
+      );
+      const formattedDate = formatDistance(date, new Date());
+      return formattedDate;
+    } catch (error) {
+      console.log(error);
+      return "";
+    }
+  };
 
   const { status, data: userData } = useQuery(
     {
@@ -48,12 +58,12 @@ export default function FullViewPostCard({
 
     const image = new Image();
     image.addEventListener("load", handleImageLoad);
-    image.src = data.photoUrl;
+    image.src = data?.photoUrl;
 
     return () => {
       image.removeEventListener("load", handleImageLoad);
     };
-  }, [data.photoUrl]);
+  }, [data?.photoUrl]);
 
   const deletePost = () => {};
 
@@ -150,11 +160,13 @@ export default function FullViewPostCard({
               </svg>
             </div>
           ) : (
-            <img
-              className="rounded-md bg-black mb-2 mt-2"
-              src={data?.photoUrl}
-              alt={data?.caption}
-            />
+            <div className="bg-black items-center justify-center flex rounded-md">
+              <img
+                className="rounded-md h-96 object-contain bg-black mb-2 mt-2"
+                src={data?.photoUrl}
+                alt={data?.caption}
+              />
+            </div>
           )}
 
           <div className="mb-2 mt-2">{data?.caption}</div>
@@ -167,7 +179,7 @@ export default function FullViewPostCard({
           />
         </div>
         <span className="text-sm mt-2 text-slate-500 flex justify-end">
-          {formattedDate}
+          {generateTime()}
         </span>
       </div>
     </>

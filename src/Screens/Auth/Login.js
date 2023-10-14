@@ -147,7 +147,9 @@ function Login() {
         } else {
           openSnackbar({ message: "Log in successful" });
           setIsLoading("false");
-          dispatch(getUserDocData(getUserDataUid(user.uid)));
+          let userData = await getUserDataUid(auth.currentUser.uid)
+          console.log(userData)
+          dispatch(getUserDocData(userData));
           navigate("/home");
         }
       }

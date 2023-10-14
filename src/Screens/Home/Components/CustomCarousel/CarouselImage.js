@@ -33,11 +33,13 @@ export default function CarouselImage({ data }) {
           </svg>
         </div>
       ) : (
-        <img
-          className="object-cover bg-black rounded-md w-full"
-          src={data}
-          alt="photos"
-        />
+        <div className="bg-black  justify-center items-center flex rounded">
+          <img
+            className="object-contain h-[25rem] bg-black rounded-md w-full"
+            src={data}
+            alt="photos"
+          />
+        </div>
       )}
     </>
   );

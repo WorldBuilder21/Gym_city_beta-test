@@ -61,7 +61,7 @@ export default function UserHomeScreen() {
       queryKey: ["userData"],
       queryFn: () => getUserDataUid(custom_user.uid),
     },
-    { enabled: custom_user.uid ? true: false }
+    { enabled: custom_user.uid ? true : false }
   );
 
   const pictureDeletMutate = useMutation({
@@ -140,6 +140,10 @@ export default function UserHomeScreen() {
         severity: "error",
       });
     }
+  };
+
+  const addMore = (event) => {
+
   };
 
   return (

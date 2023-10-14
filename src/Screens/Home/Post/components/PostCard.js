@@ -17,9 +17,9 @@ export default function PostCard({ data, uid }) {
 
   console.log("userdoc:", user_doc);
 
-  console.log('docId:', data?.docId)
+  console.log("docId:", data?.docId);
 
-  console.log(uid)
+  console.log(uid);
 
   // comment counter
   // uid, postId
@@ -48,9 +48,8 @@ export default function PostCard({ data, uid }) {
     { enabled: false }
   );
 
-
-  console.log('count likes: ', count_likes)
-  console.log('count_comment: ', count_comment)
+  console.log("count likes: ", count_likes);
+  console.log("count_comment: ", count_comment);
 
   const like_counter =
     count_status_likes === "loading"
@@ -84,11 +83,13 @@ export default function PostCard({ data, uid }) {
           }}
           className="mt-2 mb-2"
         >
-          <img
-            className="rounded-md"
-            src={data?.photoUrl}
-            alt={data?.caption}
-          />
+          <div className="bg-black items-center justify-center flex rounded-md">
+            <img
+              className="rounded-md object-contain h-80"
+              src={data?.photoUrl}
+              alt={data?.caption}
+            />
+          </div>
         </button>
         <div className="mt-2 flex items-center space-x-4">
           <div className="flex items-center">

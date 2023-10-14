@@ -25,14 +25,11 @@ export default function PictureDisplayBox({
   const custom_user = useSelector((state) => state.user.user);
   const userdoc = useSelector((state) => state.userdoc.userdoc);
   const [isLoading, setIsLoading] = useState(false);
-  const queryClient = useQueryClient();
   const uid = custom_user.uid;
 
   const pictureMutation = useMutation({
     mutationFn: uploadPicture,
     onSuccess: (data) => {
-      queryClient.invalidateQueries(["photoUrls"]);
-
       openSnackbar({ message: "Upload complete." });
       setIsLoading(false);
       refetch();
@@ -61,6 +58,7 @@ export default function PictureDisplayBox({
           uid,
           file,
         });
+        refetch();
 
         // const storageRef = ref(
         //   storage,
@@ -137,7 +135,13 @@ export default function PictureDisplayBox({
                     <Close />
                   </IconButton>
                 </div>
-                <img className="w-full rounded-sm" src={url} alt="post file" />
+                <div className="bg-black rounded-sm">
+                  <img
+                    className="w-full max-h-80 object-contain rounded-sm"
+                    src={url}
+                    alt="post file"
+                  />
+                </div>
                 <button
                   onClick={handleUpload}
                   disabled={isLoading}
